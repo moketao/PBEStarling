@@ -3,13 +3,17 @@
     <span class="kd">import</span> <span class="nx">com</span><span class="p">.</span><span class="nx">pblabs</span><span class="p">.</span><span class="nx">core</span><span class="p">.</span><span class="nx">PBGameObject</span><span class="o">;</span>
     <span class="kd">import</span> <span class="nx">com</span><span class="p">.</span><span class="nx">pblabs</span><span class="p">.</span><span class="nx">simplest</span><span class="p">.</span><span class="nx">SimplestSpriteRenderer</span><span class="o">;</span>
     <span class="kd">import</span> <span class="nx">com</span><span class="p">.</span><span class="nx">pblabs</span><span class="p">.</span><span class="nx">simplest</span><span class="p">.</span><span class="nx">SimplestSpatialComponent</span><span class="o">;</span>
-    </pre></div>             </td>           </tr>                               <tr id="section-2">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-2">&#182;</a>               </div>               <p>If you want to use PBGameObject but have direct access to components,
-you can subclass it. Public members that contain components are
-automagically added. For instance, in this class, if you fill the
-spatial var with a component, it will be added to the GameObject with
-the name "spatial". Or, if you add a component (using addComponent) with
-the name "spatial" and the var is empty, it will be filed. In this way,
-you can get nice typed access to components in your game object.</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="kd">public</span> <span class="kd">class</span> <span class="nx">SimplestDemoGameObject</span> <span class="kd">extends</span> <span class="nx">PBGameObject</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-2">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-2">&#182;</a>               </div>               <p>If you want to use PBGameObject but have direct access to components, or
+add other special behavior, you can subclass it.</p>
+
+<p>Public members that contain components are automagically added. For
+instance, in this class, if you fill the spatial var with a component, 
+it will be added to the GameObject with the name "spatial" when
+initialize() is called. Or, if you add a component (using addComponent) 
+with the name "spatial" and the var is empty, it will be filed. </p>
+
+<p>In this way, you can get nice typed access to components in your game 
+object.</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="kd">public</span> <span class="kd">class</span> <span class="nx">SimplestDemoGameObject</span> <span class="kd">extends</span> <span class="nx">PBGameObject</span>
     <span class="p">{</span>
         <span class="kd">public</span> <span class="k">var</span> <span class="nx">spatial</span><span class="o">:</span><span class="nx">SimplestSpatialComponent</span><span class="o">;</span>
         <span class="kd">public</span> <span class="k">var</span> <span class="nx">render</span><span class="o">:</span><span class="nx">SimplestSpriteRenderer</span><span class="o">;</span>
