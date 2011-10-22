@@ -1,16 +1,10 @@
 /**
  * ## Introduction
  * 
- * PushButton Engine is an industrial strength Flash game framework.
+ * PushButton Engine is an industrial strength open source Flash game framework.
  *
- * <b>Useful Links:</b>
- * <ul>
- *     <li><a href="http://github.com/PushButtonLabs/PushButtonEngine">GitHub
- *         Project</a></li>
- *     <li><a href="http://www.pushbuttonengine.com/forum">Official
- *         Forums</a></li>
- * </ul>
- * 
+ * Its home page is <a href="http://PushButtonLabs.github.com/PushButtonEngine">http://PushButtonLabs.github.com/PushButtonEngine</a>.
+ *
  * You can click the Jump To.. button in the top right of the page to navigate
  * to different parts of the documentation.
  *
