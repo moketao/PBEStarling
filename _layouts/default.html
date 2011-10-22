@@ -12,13 +12,21 @@
 	<div class="container">
 		<div class="span-24">
 			<h1> {{ page.title }} </h1>
+			<i>{{ page.header }}</i>
 		</div>
 		
-		<div class="span-24">
-			{{ page.header }}<br>
+		<div class="span-18">
 			{{ content }}
 		</div>
-		
+
+		<div class="span-6 last">
+			<h2>Links</h2>
+
+			<b>Documentation</b> <a href="v1/">Version 1</a> | <a href="v2/">Version 2</a><br>
+			<b>Source Code</b> <a href="https://github.com/PushButtonLabs/PushButtonEngine">Version 1</a> | <a href="https://github.com/PushButtonLabs/PushButtonEngine/tree/PBE2">Version 2</a><br>
+		</div>
+
+
 		<div class="span-24">
 			<center>
 			<i>(c) 2011 PushButton Labs LLC - Generated {{site.time}}</i>

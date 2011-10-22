@@ -11,6 +11,44 @@
 
 ----------------------------------------------------------------------- */
 
+/* Tumblr Formatting */
+
+.tumblr_posts {	
+	list-style: none;
+}
+
+.tumblr_post {
+
+}
+.tumblr_title {	
+	font-size: 100%;
+	font-weight: bold;
+}
+
+.tumblr_body img {	
+
+}
+
+.read_more_container {
+	
+}
+.read_more_container a {
+	
+}
+
+.tumblr_quote {	
+
+}
+.tumblr_quote p {		
+
+}
+.tumblr_source {
+	
+}
+
+
+
+
 /* reset.css */
 html {margin:0;padding:0;border:0;}
 body, div, span, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, abbr, acronym, address, code, del, dfn, em, img, q, dl, dt, dd, ol, ul, li, fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td, article, aside, dialog, figure, footer, header, hgroup, nav, section {margin:0;padding:0;border:0;font-size:100%;font:inherit;vertical-align:baseline;}
