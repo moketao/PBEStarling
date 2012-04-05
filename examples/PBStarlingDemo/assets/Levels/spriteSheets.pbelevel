@@ -1,0 +1,36 @@
+<things version="1">
+  <entity name="PlatformSpriteSheet">
+    <component type="com.pblabs.rendering2D.spritesheet.SpriteSheetComponent" name="SpriteSheet">
+      <image filename="../Assets/Images/platform.png"/>
+    </component>
+  </entity>
+  <entity name="DudeSpriteSheet">
+    <component type="com.pblabs.rendering2D.spritesheet.SpriteSheetComponent" name="SpriteSheet">
+      <divider type="com.pblabs.rendering2D.spritesheet.CellCountDivider">
+        <xCount>8</xCount>
+        <yCount>8</yCount>
+      </divider>
+      <image filename="../Assets/Images/mannequin.png"/>
+    </component>
+  </entity>
+  
+  <entity name="DudeAtlas">
+	  <component type="com.starling.rendering2D.TextureAtlasComponent" name="TextureAtlas">
+		  <xml filename="../assets/images/dude.xml" />
+		  <image filename="../assets/images/dude.png" />
+	  </component>
+  </entity> 
+  
+  <entity name="PlatformTexture">
+    <component type="com.starling.rendering2D.TextureComponent" name="Texture">
+      <image filename="../Assets/Images/platform.png"/>
+    </component>
+  </entity>
+  
+  <group name="SpriteSheets">
+    <objectReference name="DudeAtlas"/>
+    <objectReference name="DudeSpriteSheet"/>
+    <objectReference name="PlatformSpriteSheet"/>
+    <objectReference name="PlatformTexture"/>
+  </group>
+</things>

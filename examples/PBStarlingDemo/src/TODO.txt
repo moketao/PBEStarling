@@ -1,0 +1,38 @@
+StarlingScene
+	X add Track scroll limit trackLimitRectangle
+	X add layer index
+	
+	- add zoom, minZoom, maxZoom
+	
+	- add zIndex
+	- add lookAhead x/y - if trackObject is set, uses mouse position as trackObject offset
+	- add clipping rectangle (look into - Starling.context.setScissorRectangle )
+	- transform to/from world to screen coordinates
+	
+	
+DisplayObjectRenderer 
+	X add layerIndex
+	- add zIndex
+	- add "scrollFactor" x/y for paralax scrolling
+	- add color/tint/brightness/contrast/hue properties
+	
+Image/MovieClip/SpritesheetRenderer's
+	- add a listner to the ImageResource and add the displayObject to the scene after it has been created, rather than in the advanceTime func
+	
+	
+InputKey 
+	- add support for starling Touch events
+	
+Animator
+	- fix PING_PONG_ANIMATION
+	
+SimpleShapeRenderer
+	- add SimpleShapeRenderer componenet, 
+	
+	
+MovieClipRenderer
+	- have it extended spritesheetrender, but using a flash.display.MovieClip as the source of the texture atlas
+	- make it construct a texture atlas from a movieclip dynamically
+	
+Camera Controller
+	- add camera shake animator, for damage effects

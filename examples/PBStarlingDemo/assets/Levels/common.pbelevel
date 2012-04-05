@@ -1,0 +1,139 @@
+<things version="1">
+  <entity name="SpatialDB">
+    <component type="com.pblabs.box2D.Box2DManagerComponent" name="Manager">
+		<gravity>
+			<x>0</x>
+			<y>9.81</y>
+		</gravity>
+	</component>
+  </entity>
+  
+  <entity name="Scene">
+	  <component type="com.starling.rendering2D.StarlingScene" name="Scene">
+		<trackObject componentReference="Dude"/>
+		<trackOffset>
+			<x>-640</x>
+			<y>-300</y>
+		</trackOffset>
+	  </component>
+  </entity>
+  
+  <!-- Software rendered DisplayObjectScene for Box2D debug drawing -->
+  <entity name="DebugScene">
+    <component type="com.pblabs.rendering2D.DisplayObjectScene" name="DebugScene">
+		<trackObject componentReference="Dude"/>
+		<trackOffset>
+			<x>-640</x>
+			<y>-300</y>
+		</trackOffset>
+		<sceneViewName>MainView</sceneViewName>
+    </component>
+  </entity>
+  <entity name="Box2D">
+    <component type="com.pblabs.box2D.Box2DDebugComponent" name="Debug">
+      <spatialManager componentReference="SpatialDB"/>
+      <scene componentReference="DebugScene"/>
+    </component>
+  </entity>
+  
+  <entity name="Dude">
+    <component type="com.pblabs.box2D.Box2DSpatialComponent" name="Spatial">
+      <canRotate>false</canRotate>
+      <canSleep>false</canSleep>
+	  <bodyType>2</bodyType>
+      <collidesWithTypes childType="String">
+        <_0>Platform</_0>
+      </collidesWithTypes>
+      <collisionShapes childType="com.pblabs.box2D.CollisionShape">
+        <_0 type="com.pblabs.box2D.CircleCollisionShape">
+          <offset type="">
+            <x>0</x>
+            <y>0</y>
+          </offset>
+          <radius>1</radius>
+        </_0>
+      </collisionShapes>
+      <collisionType childType="String">
+        <_0>Dude</_0>
+        <_1>Renderable</_1>
+      </collisionType>
+      <spatialManager componentReference="SpatialDB"/>
+      <position type="">
+        <x>400</x>
+        <y>100</y>
+      </position>
+      <size type="">
+        <x>64</x>
+        <y>64</y>
+      </size>
+    </component>
+	
+	<component type="com.pblabs.rendering2D.SimpleShapeRenderer" name="DebugRender">
+		<scene componentReference="DebugScene"/>
+		<positionProperty>@Spatial.position</positionProperty>
+      <rotationProperty>@Spatial.rotation</rotationProperty>
+      <sizeProperty>@Spatial.size</sizeProperty>
+	</component>
+	
+	<component type="com.starling.rendering2D.SpriteSheetRenderer" name="Render">
+		<textureAtlas componentReference="DudeAtlas"/>
+		<prefix>dude_</prefix>
+		<positionOffset>
+			<x>64</x>
+			<y>85</y>
+		</positionOffset>
+		<layerIndex>1</layerIndex>
+		<scene componentReference="Scene"/>
+		 <positionProperty>@Spatial.position</positionProperty>
+         <rotationProperty>@Spatial.rotation</rotationProperty>
+	</component>
+	
+	<component type="com.starling.animation.AnimatorComponent" name="FrameAnimation">
+      <animations childType="com.starling.animation.FrameAnimator">
+        <idle type="">
+          <!-- something wrong with ping-ping <animationType>PING_PONG_ANIMATION</animationType>-->
+		  <animationType>LOOP_ANIMATION</animationType>
+          <duration>1.6</duration>
+          <repeatCount>-1</repeatCount>
+          <startFrame type="int">1</startFrame>
+          <endFrame type="int">3</endFrame>
+        </idle>
+		<run type="">
+          <animationType>LOOP_ANIMATION</animationType>
+          <duration>1.0</duration>
+          <repeatCount>-1</repeatCount>
+          <startFrame type="int">4</startFrame>
+          <endFrame type="int">19</endFrame>
+        </run>
+      </animations>
+      <defaultAnimation>idle</defaultAnimation>
+      <reference>@Render.spriteIndex</reference>
+    </component>
+	
+	
+    <component type="com.pblabs.stupidSampleGame.DudeController" name="Controller">
+      <input childType="com.pblabs.engine.core.InputKey">
+        <GoLeft>LEFT</GoLeft>
+        <GoRight>RIGHT</GoRight>
+        <Jump>UP</Jump>
+        <GoLeft>A</GoLeft>
+        <GoRight>D</GoRight>
+        <Jump>SPACE</Jump>
+		<ZoomIn>PLUS</ZoomIn>
+		<ZoomOut>MINUS</ZoomOut>
+      </input>
+      <velocityReference>@Spatial.linearVelocity</velocityReference>
+	   <animatorReference componentName="FrameAnimation" />
+	   <renderReference componentName="Render" />
+    </component>
+  </entity>
+  <group name="Common">
+    <objectReference name="SpatialDB"/>
+    <objectReference name="Scene"/>
+    <objectReference name="Dude"/>
+	
+	<!-- box 2d debug drawer and legacy DisplayObjectScene -->
+	<objectReference name="DebugScene"/>
+    <objectReference name="Box2D"/>
+  </group>
+</things>
