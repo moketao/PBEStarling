@@ -56,13 +56,13 @@ package com.pblabs.stupidSampleGame
         {
             var move:Number = _right - _left;
             var velocity:Point = owner.getProperty(velocityReference);
-            velocity.x = move * 300;//600;
+            velocity.x = move * 300;
             
             if (_jump > 0)
             {
                 PBE.soundManager.play("../Assets/Sounds/testSound.mp3");
                 
-                velocity.y -= 200;
+                velocity.y -= 350;
                 _jump = 0;
             }
 					
@@ -75,7 +75,7 @@ package com.pblabs.stupidSampleGame
             super.onAdd();
 
             owner.eventDispatcher.addEventListener(CollisionEvent.COLLISION_EVENT, _OnCollision);
-            //owner.eventDispatcher.addEventListener(CollisionEvent.PRE_COLLISION_EVENT, _OnPreCollision);
+            owner.eventDispatcher.addEventListener(CollisionEvent.PRE_COLLISION_EVENT, _OnPreCollision);
             owner.eventDispatcher.addEventListener(CollisionEvent.COLLISION_STOPPED_EVENT, _OnCollisionEnd);
         }
         
@@ -84,11 +84,11 @@ package com.pblabs.stupidSampleGame
             super.onRemove();
             
             owner.eventDispatcher.removeEventListener(CollisionEvent.COLLISION_EVENT, _OnCollision);
-            //owner.eventDispatcher.removeEventListener(CollisionEvent.PRE_COLLISION_EVENT, _OnPreCollision);
+            owner.eventDispatcher.removeEventListener(CollisionEvent.PRE_COLLISION_EVENT, _OnPreCollision);
             owner.eventDispatcher.removeEventListener(CollisionEvent.COLLISION_STOPPED_EVENT, _OnCollisionEnd);
         }
 		
-		/*
+		
 		private function _OnPreCollision(event:CollisionEvent):void
         {
 			
@@ -104,7 +104,7 @@ package com.pblabs.stupidSampleGame
 					event.contact.SetEnabled(false);
             }
         }
-		*/
+		
         
         private function _OnCollision(event:CollisionEvent):void
         {

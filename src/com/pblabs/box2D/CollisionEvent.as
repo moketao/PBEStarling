@@ -9,6 +9,7 @@
 package com.pblabs.box2D
 {
    import Box2D.Collision.b2ContactPoint;
+   import Box2D.Dynamics.Contacts.b2Contact;
    
    import flash.events.Event;
    import flash.geom.Point;
@@ -16,19 +17,20 @@ package com.pblabs.box2D
    public class CollisionEvent extends Event
    {
       public static const COLLISION_EVENT:String = "COLLISION_EVENT";
+      public static const PRE_COLLISION_EVENT:String = "PRE_COLLISION_EVENT";
       public static const COLLISION_STOPPED_EVENT:String = "COLLISION_STOPPED_EVENT";
       
       public var collider:Box2DSpatialComponent = null;
       public var collidee:Box2DSpatialComponent = null;
       public var normal:Point = null;
-      public var contactPoint:b2ContactPoint = null;
+      public var contact:b2Contact = null;
       
-      public function CollisionEvent(type:String, point:b2ContactPoint, bubbles:Boolean=false, cancelable:Boolean=false)
+      public function CollisionEvent(type:String, contact:b2Contact, bubbles:Boolean=false, cancelable:Boolean=false)
       {
-         collider = point.shape1.m_userData as Box2DSpatialComponent;
-         collidee = point.shape2.m_userData as Box2DSpatialComponent;
-         normal = new Point(point.normal.x, point.normal.y);
-         contactPoint = point;
+         collider = contact.GetFixtureA().GetUserData() as Box2DSpatialComponent;
+         collidee = contact.GetFixtureB().GetUserData() as Box2DSpatialComponent;
+         normal = new Point(contact.GetManifold().m_localPlaneNormal.x, contact.GetManifold().m_localPlaneNormal.y);
+         this.contact = contact;
          
          super(type, bubbles, cancelable);
       }

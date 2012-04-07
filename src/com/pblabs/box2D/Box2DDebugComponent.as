@@ -43,7 +43,7 @@ package com.pblabs.box2D
             spatialManager = value;
             Logger.warn(this, "set manager", "manager is deprecated; switch to spatialManager.");
         }
-                
+        /*
         override public function get layerIndex():int
         {
             // Always draw last.
@@ -52,15 +52,16 @@ package com.pblabs.box2D
             else
                 return 0;
         }
+		*/
         
         override protected function onAdd():void
         {
 			super.onAdd();
             displayObject = new Sprite();
 			_zIndex = 30000;
-            _drawer.m_sprite = displayObject as Sprite;
-            _drawer.m_fillAlpha = 0.3;
-            _drawer.m_lineThickness = 1.0;
+            _drawer.SetSprite(displayObject as Sprite);
+            _drawer.SetFillAlpha(0.3);
+            _drawer.SetLineThickness(1);
             applyDebugFlags();
         }
 
@@ -75,8 +76,19 @@ package com.pblabs.box2D
             if (spatialManager)
                 spatialManager.setDebugDrawer(_drawer);
         }
-
-        public function get drawShapes():Boolean
+		
+		public function get drawControllers():Boolean
+        {
+            return _drawControllers;
+        }
+        
+        public function set drawControllers(value:Boolean):void
+        {
+            _drawControllers = value;
+            applyDebugFlags();
+        }
+		
+		public function get drawShapes():Boolean
         {
             return _drawShapes;
         }
@@ -166,9 +178,9 @@ package com.pblabs.box2D
                 _drawer.ClearFlags(b2DebugDraw.e_jointBit);
             
             if (_drawCoreShapes) 
-                _drawer.AppendFlags(b2DebugDraw.e_coreShapeBit);
+                _drawer.AppendFlags(b2DebugDraw.e_shapeBit);
             else 
-                _drawer.ClearFlags(b2DebugDraw.e_coreShapeBit);
+                _drawer.ClearFlags(b2DebugDraw.e_shapeBit);
             
             if (_drawAABB) 
                 _drawer.AppendFlags(b2DebugDraw.e_aabbBit);
@@ -176,9 +188,9 @@ package com.pblabs.box2D
                 _drawer.ClearFlags(b2DebugDraw.e_aabbBit);
             
             if (_drawOBB) 
-                _drawer.AppendFlags(b2DebugDraw.e_obbBit);
+                _drawer.AppendFlags(b2DebugDraw.e_aabbBit);
             else 
-                _drawer.ClearFlags(b2DebugDraw.e_obbBit);
+                _drawer.ClearFlags(b2DebugDraw.e_aabbBit);
             
             if (_drawPairs)
                 _drawer.AppendFlags(b2DebugDraw.e_pairBit);
@@ -189,16 +201,22 @@ package com.pblabs.box2D
                 _drawer.AppendFlags(b2DebugDraw.e_centerOfMassBit);
             else 
                 _drawer.ClearFlags(b2DebugDraw.e_centerOfMassBit);
+			
+			if (_drawControllers)
+				_drawer.AppendFlags(b2DebugDraw.e_controllerBit);
+			else
+				_drawer.ClearFlags(b2DebugDraw.e_controllerBit);
         }        
         
         private var _manager:Box2DManagerComponent = null;
         protected var _drawer:b2DebugDraw = new b2DebugDraw();
         protected var _drawShapes:Boolean = true; 
         protected var _drawJoints:Boolean = true;      
-        protected var _drawCoreShapes:Boolean = false;
-        protected var _drawAABB:Boolean = false;
+        protected var _drawCoreShapes:Boolean = true;
+        protected var _drawAABB:Boolean = true;
         protected var _drawOBB:Boolean = false;
-        protected var _drawPairs:Boolean = false;
-        protected var _drawCenterOfMass:Boolean = false;
+        protected var _drawPairs:Boolean = true;
+        protected var _drawCenterOfMass:Boolean = true;
+		protected var _drawControllers:Boolean = true;
     }
 }

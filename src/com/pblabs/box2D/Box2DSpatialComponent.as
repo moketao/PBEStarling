@@ -13,6 +13,8 @@ package com.pblabs.box2D
     import Box2D.Common.Math.b2Vec2;
     import Box2D.Dynamics.b2Body;
     import Box2D.Dynamics.b2BodyDef;
+	import Box2D.Dynamics.b2Fixture;
+	import Box2D.Dynamics.b2FixtureDef;
     
     import com.pblabs.engine.PBUtil;
     import com.pblabs.engine.core.ObjectType;
@@ -36,9 +38,6 @@ package com.pblabs.box2D
      */
     public class Box2DSpatialComponent extends EntityComponent implements IMobileSpatialObject2D
     {
-		[EditorData(ignore="true")]
-        public var onAddedCallback:Function = null;
-
         public function get spatialManager():Box2DManagerComponent
         {
             return _manager;
@@ -55,14 +54,12 @@ package com.pblabs.box2D
             _manager = value;
         }
         
-		[EditorData(ignore="true")]
         public function get manager():Box2DManagerComponent
         {
             Logger.warn(this, "get manager", "manager is deprecated; switch to spatialManager.");
             return spatialManager;
         }
         
-		[EditorData(ignore="true")]
         public function set manager(value:Box2DManagerComponent):void
         {
             spatialManager = value;
@@ -80,7 +77,6 @@ package com.pblabs.box2D
         /**
          * @inheritDoc
          */
-		[EditorData(ignore="true")]
         public function get objectMask():ObjectType
         {
             return _collidesWithTypes;
@@ -94,6 +90,11 @@ package com.pblabs.box2D
             //TODO: how far should a spatial component actually have a size?
             return new Rectangle(position.x - (size.x * 0.5), position.y - (size.y * 0.5), size.x, size.y);         
         }
+		
+		
+		public function getWorldPosition(localPosition:Point):Point {
+			return new Point(position.x + localPosition.x, position.y + localPosition.y);
+		}
         
         /**
          * Not currently implemented.
@@ -157,7 +158,7 @@ package com.pblabs.box2D
             if (_body)
             {
                 position.Multiply(_manager.inverseScale);
-                _body.SetXForm(position, _body.GetAngle());
+                _body.SetPositionAndAngle(position, _body.GetAngle());
             }
         }
         
@@ -177,7 +178,7 @@ package com.pblabs.box2D
             _bodyDef.angle = rotation;
             
             if (_body)
-                _body.SetXForm(_body.GetPosition(), rotation);
+                _body.SetPositionAndAngle(_body.GetPosition(), rotation);
         }
         
         [EditorData(defaultValue="100|100")]
@@ -278,7 +279,7 @@ package com.pblabs.box2D
             _canSleep = value;
             _bodyDef.allowSleep = value;
             if (_body)
-                _body.AllowSleeping(value);
+                _body.SetSleepingAllowed(value);
         }
         
         public function get collidesContinuously():Boolean
@@ -286,15 +287,29 @@ package com.pblabs.box2D
             if (_body)
                 return _body.IsBullet();
             
-            return _bodyDef.isBullet
+            return _bodyDef.bullet
         }
         
         public function set collidesContinuously(value:Boolean):void
         {
-            _bodyDef.isBullet = value;
+            _bodyDef.bullet = value;
             if (_body)
                 _body.SetBullet(value);
         }
+		
+		public function get bodyType():uint {
+			if (_body)
+				return _body.GetType();
+			
+			return _bodyDef.type;
+		}
+		
+		public function set bodyType(value:uint):void {
+			_bodyDef.type = value;
+			
+			if (_body)
+				_body.SetType(value);
+		}
         
         [TypeHint(type="com.pblabs.box2D.CollisionShape")]
         public function get collisionShapes():Array
@@ -317,26 +332,36 @@ package com.pblabs.box2D
                 return;
             }
             
-            var shape:b2Shape = _body.GetShapeList();
+            var shape:b2Fixture = _body.GetFixtureList();
             while (shape)
             {
-                var nextShape:b2Shape = shape.m_next;
-                _body.DestroyShape(shape);
+                var nextShape:b2Fixture = shape.GetNext();
+                _body.DestroyFixture(shape);
                 shape = nextShape;
             }
             
             if (_collisionShapes)
             {
                 for each (var newShape:CollisionShape in _collisionShapes)
-                _body.CreateShape(newShape.createShape(this));
+				_body.CreateFixture(newShape.createShape(this));
             }
             
             updateMass();
         }
+		
+		public function addCollisionShape(collisionShape:CollisionShape):void {
+			_body.CreateFixture(collisionShape.createShape(this));
+			
+			updateMass();
+		}
+		
+		public function removeCollisionShape(collisionShape:CollisionShape):void {
+			//_body.DestroyFixture();
+		}
         
         public function updateMass():void
         {
-            _body.SetMassFromShapes();
+            _body.ResetMassData();
             if (!_canMove || !_canRotate)
             {
                 var mass:b2MassData = new b2MassData();
@@ -351,7 +376,7 @@ package com.pblabs.box2D
                 else
                     mass.I = 0;
                 
-                _body.SetMass(mass);
+                _body.SetMassData(mass);
             }
         }
         
@@ -365,7 +390,7 @@ package com.pblabs.box2D
             
             _bodyDef.position.Multiply(_manager.inverseScale);
             
-            _manager.add(_bodyDef, this, 
+            _manager.addBody(_bodyDef, this, 
                 function(body:b2Body):void
                 {
                     _body = body;
@@ -376,15 +401,12 @@ package com.pblabs.box2D
                     angularVelocity = _angularVelocity;
                     
                     buildCollisionShapes();
-					
-                    if (onAddedCallback != null)
-                        onAddedCallback(this);
                 });
         }
         
         override protected function onRemove():void 
         {
-            _manager.remove(_body);
+            _manager.removeBody(_body);
             _body = null;
         }
         
@@ -404,7 +426,7 @@ package com.pblabs.box2D
         private var _collisionShapes:Array = null;
         private var _collidesContinuously:Boolean = false;
         
-        private var _body:b2Body = null;
+        private var _body:b2Body;
         private var _bodyDef:b2BodyDef = new b2BodyDef();
     }
 }
