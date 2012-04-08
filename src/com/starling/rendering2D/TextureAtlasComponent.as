@@ -11,11 +11,17 @@ package com.starling.rendering2D
 	
 	public class TextureAtlasComponent extends EntityComponent 
 	{
+		private var _isLoaded:Boolean = false;
 		private var _image:ImageResource;
 		private var _xml:XMLResource;
 		
 		public var textureAtlas:TextureAtlas;
 		public var eventDispatcher:EventDispatcher = new EventDispatcher();
+		
+		public function get isLoaded():Boolean
+		{
+			return _isLoaded;
+		}
 		
 		public function get image():ImageResource
 		{
@@ -58,6 +64,7 @@ package com.starling.rendering2D
 			if ( xml != null && xml.isLoaded && image != null && image.isLoaded )
 			{
 				textureAtlas  = new TextureAtlas(Texture.fromBitmap( image.image), xml.XMLData );
+				_isLoaded = true;
 				eventDispatcher.dispatchEvent( new Event(Event.COMPLETE) );
 			}
 			
@@ -69,6 +76,7 @@ package com.starling.rendering2D
 			if ( xml != null && xml.isLoaded && image != null && image.isLoaded )
 			{
 				textureAtlas  = new TextureAtlas(Texture.fromBitmap( image.image), xml.XMLData );
+				_isLoaded = true;
 				eventDispatcher.dispatchEvent( new Event(Event.COMPLETE) );
 			}
 		}

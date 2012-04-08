@@ -31,12 +31,14 @@ package com.starling.rendering2D
 			
 			if ( textureAtlasComponent != null && textureAtlasComponent.textureAtlas != null && scene != null )
 				scene.add( this );
-			else if ( textureAtlasComponent != null ) //texture isn't loaded
+			else if ( textureAtlasComponent != null && textureAtlasComponent.isLoaded )
+				onTextureComplete();
+			else if( textureAtlasComponent != null ) //texture isn't loaded
 				textureAtlasComponent.eventDispatcher.addEventListener(Event.COMPLETE, onTextureComplete );
 			
 		}
 		
-		private function onTextureComplete(e:Event):void
+		private function onTextureComplete(e:Event=null):void
 		{
 			textureAtlasComponent.eventDispatcher.removeEventListener(Event.COMPLETE, onTextureComplete );
 			

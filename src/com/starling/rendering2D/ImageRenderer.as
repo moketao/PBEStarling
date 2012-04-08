@@ -32,11 +32,13 @@ package com.starling.rendering2D
 			
 			if ( image != null && scene != null )
 				scene.add( this );
-			else if ( textureComponent != null ) //texture isn't loaded
+			else if ( textureComponent != null && textureComponent.isLoaded ) 
+				onTextureComplete();
+			else if( textureComponent != null )//texture isn't loaded
 				textureComponent.eventDispatcher.addEventListener(Event.COMPLETE, onTextureComplete );
 		}
 		
-		private function onTextureComplete(e:Event):void
+		private function onTextureComplete(e:Event=null):void
 		{
 			textureComponent.eventDispatcher.removeEventListener(Event.COMPLETE, onTextureComplete );
 			if ( textureComponent.texture != null )
