@@ -24,8 +24,6 @@ package
         [Embed(source = "../assets/Levels/templates.pbelevel", mimeType = 'application/octet-stream')]
         public var _levelTemplates:Class;
         
-        [Embed(source = "../assets/Images/mannequin.png")]
-        public var _mannequin:Class;
         [Embed(source = "../assets/Images/platform.png")]
         public var _platform:Class;
 		

@@ -61,7 +61,6 @@ package
 			 PBE.registerType(ImageRenderer);
 			 PBE.registerType(TextureComponent);
 			 PBE.registerType(SpriteSheetRenderer );
-			 PBE.registerType(MovieClipRenderer );
 			 PBE.registerType(AnimatorComponent);
 			 PBE.registerType(FrameAnimator);
 			

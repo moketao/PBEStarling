@@ -1,6 +1,7 @@
 package com.starling.rendering2D 
 {
 	import com.pblabs.rendering2D.spritesheet.SpriteSheetComponent;
+	import flash.events.Event;
 	import starling.display.Image;
 	import starling.textures.Texture;
 	/**
@@ -24,6 +25,27 @@ package com.starling.rendering2D
 		
 		private var _color:int = -1;
 		private var _image:Image;
+		
+		override protected function onAdd():void 
+		{
+			super.onAdd();
+			
+			if ( image != null && scene != null )
+				scene.add( this );
+			else if ( textureComponent != null ) //texture isn't loaded
+				textureComponent.eventDispatcher.addEventListener(Event.COMPLETE, onTextureComplete );
+		}
+		
+		private function onTextureComplete(e:Event):void
+		{
+			textureComponent.eventDispatcher.removeEventListener(Event.COMPLETE, onTextureComplete );
+			if ( textureComponent.texture != null )
+			{
+				image = new Image(textureComponent.texture);
+				if (scene != null && scene.sceneView != null )
+					scene.add( this );
+			}
+		}
 		
 		
 		public function get image():Image
@@ -56,29 +78,12 @@ package com.starling.rendering2D
 		{
 			super.updateTransform(updateProps);
 			
-			
-			
 			if ( _color >= 0 )
 			{
 				image.color = this.color;
 			}
 		}
 		
-		
-		override public function advanceTime(deltaTime:Number):void 
-		{
-			if ( textureComponent != null && textureComponent.texture != null && image == null )
-			{
-				image = new Image(textureComponent.texture);
-			}
-			
-			//TODO - move this for when the textureComponent is loaded
-			if ( scene != null && scene.sceneView != null && image != null && (scene.getLayer(this.layerIndex) == null || !scene.getLayer(this.layerIndex).contains( image) ) )
-				scene.add( this );
-				//scene.sceneView.addChild( image );
-			
-			super.advanceTime(deltaTime);
-		}
 		
 	}
 

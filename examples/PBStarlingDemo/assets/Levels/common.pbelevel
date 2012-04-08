@@ -76,7 +76,7 @@
 	</component>
 	
 	<component type="com.starling.rendering2D.SpriteSheetRenderer" name="Render">
-		<textureAtlas componentReference="DudeAtlas"/>
+		<textureAtlasComponent componentReference="DudeAtlas"/>
 		<prefix>dude_</prefix>
 		<positionOffset>
 			<x>64</x>

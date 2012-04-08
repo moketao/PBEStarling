@@ -1,6 +1,7 @@
 package com.starling.rendering2D 
 {
 	import com.pblabs.rendering2D.spritesheet.SpriteSheetComponent;
+	import flash.events.Event;
 	import starling.display.MovieClip;
 	import starling.display.Image;
 	import starling.textures.Texture;
@@ -12,7 +13,7 @@ package com.starling.rendering2D
 	 */
 	public class SpriteSheetRenderer extends ImageRenderer
 	{
-		public var textureAtlas:TextureAtlasComponent;
+		public var textureAtlasComponent:TextureAtlasComponent;
 		
 		public var prefix:String = "";
 		
@@ -24,25 +25,31 @@ package com.starling.rendering2D
 		
 		private var _spriteIndex:int;
 		
-		override public function advanceTime(deltaTime:Number):void 
+		override protected function onAdd():void 
 		{
-			super.advanceTime(deltaTime);
+			super.onAdd();
 			
-			if ( textureAtlas != null && textureAtlas.textureAtlas != null && movieClip == null)
+			if ( textureAtlasComponent != null && textureAtlasComponent.textureAtlas != null && scene != null )
+				scene.add( this );
+			else if ( textureAtlasComponent != null ) //texture isn't loaded
+				textureAtlasComponent.eventDispatcher.addEventListener(Event.COMPLETE, onTextureComplete );
+			
+		}
+		
+		private function onTextureComplete(e:Event):void
+		{
+			textureAtlasComponent.eventDispatcher.removeEventListener(Event.COMPLETE, onTextureComplete );
+			
+			var textures:Vector.<Texture> = textureAtlasComponent.textureAtlas.getTextures(prefix);
+			
+			if( textures != null && textures.length > 0)
 			{
-				movieClip = new MovieClip(textureAtlas.textureAtlas.getTextures(prefix), fps);
+				movieClip = new MovieClip(textures, fps);
 				this.displayObject = movieClip;
 				
-				//if (isAnimated)
-					//Starling.juggler.add(movieClip);
+				if( scene != null )
+					scene.add( this );
 			}
-			
-			if ( scene != null && scene.sceneView != null && movieClip != null && (scene.getLayer(this.layerIndex) == null || !scene.getLayer(this.layerIndex).contains( movieClip) ) )
-				scene.add( this );
-			
-			//if ( movieClip != null && isAnimated )
-			//	movieClip.advanceTime( deltaTime );
-				
 		}
 		
 		/**

@@ -2,24 +2,75 @@ package com.starling.rendering2D
 {
 	import com.pblabs.engine.entity.EntityComponent;
 	import com.pblabs.engine.resource.ImageResource;
+	import com.pblabs.engine.resource.ResourceEvent;
 	import com.pblabs.engine.resource.XMLResource;
+	import flash.events.Event;
+	import flash.events.EventDispatcher;
 	import starling.textures.Texture;
 	import starling.textures.TextureAtlas;
 	
 	public class TextureAtlasComponent extends EntityComponent 
 	{
-		public var xml:XMLResource;
+		private var _image:ImageResource;
+		private var _xml:XMLResource;
 		
-		public var image:ImageResource;
+		public var textureAtlas:TextureAtlas;
+		public var eventDispatcher:EventDispatcher = new EventDispatcher();
 		
-		private var _textureAtlas:TextureAtlas;
-		
-		public function get textureAtlas():TextureAtlas
+		public function get image():ImageResource
 		{
-			if ( xml != null && xml.isLoaded && image != null && image.isLoaded && _textureAtlas == null)
-				_textureAtlas  = new TextureAtlas(Texture.fromBitmap( image.image), xml.XMLData );
+			return _image;
+		}
+		
+		public function set image(value:ImageResource):void
+		{
+			_image = value;
+			if ( _image != null )
+			{
+				if ( _image.isLoaded )
+					onImageResourceLoaded();
+				else
+					_image.addEventListener(ResourceEvent.LOADED_EVENT, onImageResourceLoaded );
+			}
+		}
+		
+		public function get xml():XMLResource
+		{
+			return _xml;
+		}
+		
+		public function set xml(value:XMLResource):void
+		{
+			_xml = value;
+			if ( _xml != null )
+			{
+				if ( _xml.isLoaded )
+					onXMLResourceLoaded();
+				else
+					_xml.addEventListener(ResourceEvent.LOADED_EVENT, onXMLResourceLoaded );
+			}
+		}
+		
+		
+		private function onImageResourceLoaded(e:ResourceEvent=null):void
+		{
+			_image.removeEventListener(ResourceEvent.LOADED_EVENT, onImageResourceLoaded );
+			if ( xml != null && xml.isLoaded && image != null && image.isLoaded )
+			{
+				textureAtlas  = new TextureAtlas(Texture.fromBitmap( image.image), xml.XMLData );
+				eventDispatcher.dispatchEvent( new Event(Event.COMPLETE) );
+			}
 			
-			return _textureAtlas;
+		}
+		
+		private function onXMLResourceLoaded(e:ResourceEvent=null):void
+		{
+			_xml.removeEventListener(ResourceEvent.LOADED_EVENT, onXMLResourceLoaded );
+			if ( xml != null && xml.isLoaded && image != null && image.isLoaded )
+			{
+				textureAtlas  = new TextureAtlas(Texture.fromBitmap( image.image), xml.XMLData );
+				eventDispatcher.dispatchEvent( new Event(Event.COMPLETE) );
+			}
 		}
 		
 	}
