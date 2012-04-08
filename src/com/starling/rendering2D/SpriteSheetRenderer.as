@@ -29,7 +29,7 @@ package com.starling.rendering2D
 		{
 			super.onAdd();
 			
-			if ( textureAtlasComponent != null && textureAtlasComponent.textureAtlas != null && scene != null )
+			if ( movieClip != null && scene != null )
 				scene.add( this );
 			else if ( textureAtlasComponent != null && textureAtlasComponent.isLoaded )
 				onTextureComplete();
