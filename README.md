@@ -26,6 +26,7 @@ TODO
 	
 ###InputKey ###
 *   add support for starling Touch events
+*   add support for FP 11.2 right-click and middle click inputs
 	
 ###Animator###
 *   fix PING_PONG_ANIMATION
