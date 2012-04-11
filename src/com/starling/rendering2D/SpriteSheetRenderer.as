@@ -19,7 +19,7 @@ package com.starling.rendering2D
 		
 		public var fps:Number = 30;
 		
-		public var movieClip:MovieClip;
+		public var starlingMovieClip:MovieClip;
 		
 		private var _spriteIndex:int;
 		
@@ -27,7 +27,7 @@ package com.starling.rendering2D
 		{
 			super.onAdd();
 			
-			if ( movieClip != null && scene != null )
+			if ( starlingMovieClip != null && scene != null )
 				scene.add( this );
 			else if ( textureAtlasComponent != null && textureAtlasComponent.isLoaded )
 				onTextureComplete();
@@ -44,8 +44,8 @@ package com.starling.rendering2D
 			
 			if( textures != null && textures.length > 0)
 			{
-				movieClip = new MovieClip(textures, fps);
-				this.displayObject = movieClip;
+				starlingMovieClip = new MovieClip(textures, fps);
+				this.displayObject = starlingMovieClip;
 				
 				if( scene != null )
 					scene.add( this );
@@ -66,8 +66,8 @@ package com.starling.rendering2D
 			_spriteIndex = value;
 			
 			//update
-			if( movieClip != null )
-				movieClip.currentFrame = spriteIndex;
+			if( starlingMovieClip != null )
+				starlingMovieClip.currentFrame = spriteIndex;
 		}
 		
 	}

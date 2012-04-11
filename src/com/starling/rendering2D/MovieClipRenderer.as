@@ -9,24 +9,28 @@ package com.starling.rendering2D
 	{
 		public var isAnimated:Boolean = false;
 		
+		private var _movieClip:MovieClip;
+		
+		public function set movieClip(value:MovieClip):void
+		{
+			_movieClip = value;
+			
+			this.textureAtlasComponent = new TextureAtlasComponent();
+			this.textureAtlasComponent.textureAtlas = DynamicAtlas.fromMovieClipContainer(_movieClip);
+		}
+		
 		public function set movieClipClassName(value:String):void
 		{
 			var movieClipClass:Class = TypeUtility.getClassFromName( value );
-			var flashMovieClip:MovieClip = new movieClipClass();
-			
-			var mc:MovieClip= flashMovieClip;
-			
-			this.textureAtlasComponent = new TextureAtlasComponent();
-			this.textureAtlasComponent.textureAtlas = DynamicAtlas.fromMovieClipContainer(mc);
-			
+			movieClip =  new movieClipClass();
 		}
 		
 		override public function advanceTime(deltaTime:Number):void 
 		{
 			super.advanceTime(deltaTime);
 			
-			if ( isAnimated && movieClip != null)
-				movieClip.advanceTime(deltaTime);
+			if ( isAnimated && starlingMovieClip != null)
+				starlingMovieClip.advanceTime(deltaTime);
 		}
 		
 	}
