@@ -17,9 +17,7 @@ package com.starling.rendering2D
 		
 		public var prefix:String = "";
 		
-		public var isAnimated:Boolean = true;
-		
-		public var fps:Number;
+		public var fps:Number = 30;
 		
 		public var movieClip:MovieClip;
 		

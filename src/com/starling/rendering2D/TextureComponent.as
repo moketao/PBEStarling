@@ -9,7 +9,6 @@ package com.starling.rendering2D
 	
 	public class TextureComponent extends EntityComponent 
 	{
-		private var _isLoaded:Boolean = false;
 		private var _image:ImageResource;
 		
 		public var texture:Texture;
@@ -17,7 +16,7 @@ package com.starling.rendering2D
 		
 		public function get isLoaded():Boolean
 		{
-			return _isLoaded;
+			return texture != null;
 		}
 		
 		public function get image():ImageResource
@@ -41,7 +40,6 @@ package com.starling.rendering2D
 		{
 			_image.removeEventListener(ResourceEvent.LOADED_EVENT, onImageResourceLoaded );
 			texture  = Texture.fromBitmap( image.image );
-			_isLoaded = true;
 			eventDispatcher.dispatchEvent( new Event(Event.COMPLETE) );
 		}
 		
