@@ -38,6 +38,15 @@ package com.pblabs.engine.serialization
         }
         
         private static var _instance:Serializer = null;
+		
+		/**
+		 * Sets the application type to indicate which components are included in the deserialization
+		 * Example, if your game is being deployed on the web, and on a mobile device, and you only want a component to be included for the mobile application, 
+		 * specify includeIn="mobile" in the component definition.  
+		 * The deserialize method will check the includeIn field against the includeInType of the application and only deserialize the component or entity if they match.
+		 * @default null Ignores the includeInType if none is specified.
+		 */
+		public var includeInType:String;
         
         public function Serializer()
         {
@@ -114,6 +123,10 @@ package com.pblabs.engine.serialization
          */
         public function deserialize(object:*, xml:XML, typeHint:String=null):*
         {
+			//check the includeInType to make sure the entity should be included in the deserialization
+			if ( includeInType != null && xml.@includeIn != undefined && xml.@includeIn.indexOf(includeInType) < 0 )
+				return;
+			
             // Dispatch our special cases - entities and ISerializables.
             if (object is ISerializable)
             {

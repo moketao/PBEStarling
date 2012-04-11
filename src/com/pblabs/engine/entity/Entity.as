@@ -140,37 +140,41 @@ package com.pblabs.engine.entity
                     Logger.error(this, "deserialize", "Found unexpected tag '" + componentXML.name().toString() + "', only <component/> is valid, ignoring tag. Error in entity '" + name + "'.");
                     continue;
                 }
+				
+				//check the includeInType to make sure the component should be included in the deserialization
+				if ( Serializer.instance.includeInType == null || componentXML.@includeIn == undefined || componentXML.@includeIn.indexOf(Serializer.instance.includeInType) >= 0 )
+				{
+					var componentName:String = componentXML.attribute("name");
+					var componentClassName:String = componentXML.attribute("type");
+					var component:IEntityComponent = null;
 
-                var componentName:String = componentXML.attribute("name");
-                var componentClassName:String = componentXML.attribute("type");
-                var component:IEntityComponent = null;
+					if (componentClassName.length > 0)
+					{
+						// If it specifies a type, instantiate a component and add it.
+						component = TypeUtility.instantiate(componentClassName) as IEntityComponent;
+						if (!component)
+						{
+							Logger.error(this, "deserialize", "Unable to instantiate component " + componentName + " of type " + componentClassName + " on entity '" + name + "'.");
+							continue;
+						}
 
-                if (componentClassName.length > 0)
-                {
-                    // If it specifies a type, instantiate a component and add it.
-                    component = TypeUtility.instantiate(componentClassName) as IEntityComponent;
-                    if (!component)
-                    {
-                        Logger.error(this, "deserialize", "Unable to instantiate component " + componentName + " of type " + componentClassName + " on entity '" + name + "'.");
-                        continue;
-                    }
+						if (!addComponent(component, componentName))
+							continue;
+					}
+					else
+					{
+						// Otherwise just get the existing one of that name.
+						component = lookupComponentByName(componentName);
+						if (!component)
+						{
+							Logger.error(this, "deserialize", "No type specified for the component " + componentName + " and the component doesn't exist on a parent template for entity '" + name + "'.");
+							continue;
+						}
+					}
 
-                    if (!addComponent(component, componentName))
-                        continue;
-                }
-                else
-                {
-                    // Otherwise just get the existing one of that name.
-                    component = lookupComponentByName(componentName);
-                    if (!component)
-                    {
-                        Logger.error(this, "deserialize", "No type specified for the component " + componentName + " and the component doesn't exist on a parent template for entity '" + name + "'.");
-                        continue;
-                    }
-                }
-
-                // Deserialize the XML into the component.
-                Serializer.instance.deserialize(component, componentXML);
+					// Deserialize the XML into the component.
+					Serializer.instance.deserialize(component, componentXML);
+				}
             }
 
             // Deal with set membership.
