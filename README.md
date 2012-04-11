@@ -13,24 +13,24 @@ This is made possible by Flash's "Stage3D" technology.
 ------------
 TODO
 ------------
-StarlingScene
-	- add zoom, minZoom, maxZoom
-	- add clipping rectangle (look into - Starling.context.setScissorRectangle )
-	- transform to/from world to screen coordinates
-	- possibily rename it to DisplayObjectScene to be consistent with pblabs rendering2D
+##StarlingScene##
+*   add zoom, minZoom, maxZoom
+*   add clipping rectangle (look into - Starling.context.setScissorRectangle )
+*   transform to/from world to screen coordinates
+*   possibily rename it to DisplayObjectScene to be consistent with pblabs rendering2D
 	
-DisplayObjectRenderer 
-	- add zIndex
-	- add tint/brightness/contrast/hue properties
+##DisplayObjectRenderer ##
+*   add zIndex
+*   add tint/brightness/contrast/hue properties
 	
-InputKey 
-	- add support for starling Touch events
+##InputKey ##
+*   add support for starling Touch events
 	
-Animator
-	- fix PING_PONG_ANIMATION
+##Animator##
+*   fix PING_PONG_ANIMATION
 	
-SimpleShapeRenderer
-	- add SimpleShapeRenderer componenet, 
+##SimpleShapeRenderer##
+*   add SimpleShapeRenderer componenet
 	
 
 
