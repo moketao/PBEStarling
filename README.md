@@ -22,6 +22,7 @@ TODO
 ###DisplayObjectRenderer ###
 *   add zIndex
 *   add tint/brightness/contrast/hue properties
+*   add blurX/blurY
 	
 ###InputKey ###
 *   add support for starling Touch events
