@@ -11,18 +11,30 @@ package com.starling.rendering2D
 		
 		private var _movieClip:MovieClip;
 		
+		public var scaleFactor:Number = 1.0;
+		
 		public function set movieClip(value:MovieClip):void
 		{
 			_movieClip = value;
 			
-			this.textureAtlasComponent = new TextureAtlasComponent();
-			this.textureAtlasComponent.textureAtlas = DynamicAtlas.fromMovieClipContainer(_movieClip);
+			
 		}
 		
 		public function set movieClipClassName(value:String):void
 		{
 			var movieClipClass:Class = TypeUtility.getClassFromName( value );
 			movieClip =  new movieClipClass();
+		}
+		
+		override protected function onAdd():void 
+		{
+			if ( _movieClip != null )
+			{
+				this.textureAtlasComponent = new TextureAtlasComponent();
+				this.textureAtlasComponent.textureAtlas = DynamicAtlas.fromMovieClipContainer(_movieClip, scaleFactor);
+			}
+			
+			super.onAdd();
 		}
 		
 		override public function advanceTime(deltaTime:Number):void 
