@@ -16,6 +16,7 @@ package com.starling.rendering2D
 		public var scene:StarlingScene;
 		public var displayObject:DisplayObject;
 		public var layerIndex:int = 0;
+		public var zIndex:int = 0;
 		
 		// 0.1 to 1 = forground, fast scrolling
 		// 1 = fixed position
