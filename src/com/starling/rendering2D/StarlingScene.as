@@ -25,7 +25,7 @@ package com.starling.rendering2D
 		public function get sceneView():Sprite
         {
             if (!_sceneView )
-				_sceneView = (PBE.mainClass as IStarlingApplication).starling.stage.getChildAt(0) as Sprite;
+				_sceneView = Starling.current.stage.getChildAt(0) as Sprite;
                 //sceneView = PBE.findChild(_sceneViewName) as IUITarget;
             
             return _sceneView;
@@ -142,6 +142,19 @@ package com.starling.rendering2D
             outLayer.name = "Layer" + layerIndex;
             
             return outLayer;
+        }
+		
+		
+        public function transformWorldToScreen(inPos:Point):Point
+        {
+			// return _rootSprite.localToGlobal(inPos); 
+			return sceneView.localToGlobal(inPos);
+        }
+        
+        public function transformScreenToWorld(inPos:Point):Point
+        {
+            //return _rootSprite.globalToLocal(inPos);    
+			return sceneView.globalToLocal(inPos);
         }
 		
 	}

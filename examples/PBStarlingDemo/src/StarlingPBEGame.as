@@ -34,22 +34,8 @@ package
 		private function onAdded (e:Event):void
 		{
 			
-			
-            
-
-			/*
-            // Set up the scene view.
-            var sv:SceneView = new SceneView();
-            sv.name = "MainView";
-            sv.x = 0;
-            sv.y = 0;
-            sv.width = 800;
-            sv.height = 600;
-            addChild(sv);
-			*/
-
             // Load the descriptions, and start up level 1.
-            LevelManager.instance.load("../assets/levelDescriptions.xml", 1);
+          //  LevelManager.instance.load("../assets/levelDescriptions.xml", 1);
 		}
 	}
 

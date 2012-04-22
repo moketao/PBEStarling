@@ -1,6 +1,7 @@
 package
 {
    
+   import com.pblabs.engine.core.LevelManager;
    import com.pblabs.engine.PBE;
    import com.pblabs.box2D.*;
    import com.pblabs.rendering2D.SimpleShapeRenderer;
@@ -18,7 +19,7 @@ package
     import flash.utils.*;
     
     [SWF(width="1280", height="720", frameRate="60")]
-    public class PBStarlingDemo extends Sprite implements IStarlingApplication
+    public class PBStarlingDemo extends Sprite
     {        
 		
 		private var _starling:Starling;
@@ -82,14 +83,9 @@ package
 			sv.y = -360;
 			addChild( sv);
 			
+			LevelManager.instance.load("../assets/levelDescriptions.xml", 1);
+			
 		}
 		
-		/**
-		 * Return the core Starling
-		 */
-		public function get starling():Starling
-		{
-			return _starling;
-		}
     }
 }

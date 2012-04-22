@@ -135,6 +135,8 @@ package com.pblabs.engine.core
         public static const MOUSE_Y:InputKey = new InputKey(255);
         public static const MOUSE_WHEEL:InputKey = new InputKey(256);
         public static const MOUSE_HOVER:InputKey = new InputKey(257);
+        public static const RIGHT_MOUSE_BUTTON:InputKey = new InputKey(258);
+        public static const MIDDLE_MOUSE_BUTTON:InputKey = new InputKey(259);
 
         /**
          * A dictionary mapping the string names of all the keys to the InputKey they represent.
@@ -307,6 +309,8 @@ package com.pblabs.engine.core
                 _typeMap["MOUSE_Y"] = MOUSE_Y;
                 _typeMap["MOUSE_WHEEL"] = MOUSE_WHEEL;
                 _typeMap["MOUSE_HOVER"] = MOUSE_HOVER;
+                _typeMap["RIGHT_MOUSE_BUTTON"] = RIGHT_MOUSE_BUTTON;
+                _typeMap["MIDDLE_MOUSE_BUTTON"] = MIDDLE_MOUSE_BUTTON;
             }
 
             return _typeMap;

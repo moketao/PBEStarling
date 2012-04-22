@@ -90,6 +90,16 @@ package com.pblabs.engine.core
                     PBE.inputManager.addEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
                     PBE.inputManager.addEventListener(MouseEvent.MOUSE_UP, onMouseUp);
                 }
+				else if ( key == InputKey.RIGHT_MOUSE_BUTTON)
+				{
+					PBE.inputManager.addEventListener(MouseEvent.RIGHT_MOUSE_DOWN, onRightMouseDown);
+                    PBE.inputManager.addEventListener(MouseEvent.RIGHT_MOUSE_UP, onRightMouseUp);
+				}
+				else if ( key == InputKey.MIDDLE_MOUSE_BUTTON)
+				{
+					PBE.inputManager.addEventListener(MouseEvent.MIDDLE_MOUSE_DOWN, onMiddleMouseDown);
+                    PBE.inputManager.addEventListener(MouseEvent.MIDDLE_MOUSE_UP, onMiddleMouseUp);
+				}
                 else if ((key == InputKey.MOUSE_X) && !(_keymap[InputKey.MOUSE_Y]))
                 {
                     PBE.inputManager.addEventListener(MouseEvent.MOUSE_MOVE, onMouseMove);
@@ -207,6 +217,25 @@ package com.pblabs.engine.core
         private function onMouseUp(event:MouseEvent):void
         {
             onInputEvent(InputKey.MOUSE_BUTTON.keyCode, 0.0);
+        }
+		
+        private function onRightMouseDown(event:MouseEvent):void
+        {
+            onInputEvent(InputKey.RIGHT_MOUSE_BUTTON.keyCode, 1.0);
+        }
+
+        private function onRightMouseUp(event:MouseEvent):void
+        {
+            onInputEvent(InputKey.RIGHT_MOUSE_BUTTON.keyCode, 0.0);
+        }
+        private function onMiddleMouseDown(event:MouseEvent):void
+        {
+            onInputEvent(InputKey.MIDDLE_MOUSE_BUTTON.keyCode, 1.0);
+        }
+
+        private function onMiddleMouseUp(event:MouseEvent):void
+        {
+            onInputEvent(InputKey.MIDDLE_MOUSE_BUTTON.keyCode, 0.0);
         }
 
         private function onMouseMove(event:MouseEvent):void
