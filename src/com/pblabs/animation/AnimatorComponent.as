@@ -77,6 +77,16 @@ package com.pblabs.animation
             _currentAnimation.reset();
             _currentAnimation.play();
         }
+		
+		public function get currentAnimation():Animator
+		{
+			return _currentAnimation;
+		}
+		
+		public function set currentAnimation(value:Animator):void
+		{
+			_currentAnimation = value;
+		}
 
         /**
          * @inheritDoc
