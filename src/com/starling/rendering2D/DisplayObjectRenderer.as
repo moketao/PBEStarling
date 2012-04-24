@@ -15,15 +15,26 @@ package com.starling.rendering2D
 		
 		public var scene:StarlingScene;
 		public var displayObject:DisplayObject;
-		public var layerIndex:int = 0;
-		public var zIndex:int = 0;
+		private var _layerIndex:int = 0;
+		private var _zIndex:int = 0;
+		
+		/**
+         * If set, the layer index is gotten from this property every frame.
+         */
+        public var layerIndexProperty:PropertyReference;
+        
+        /**
+         * If set, our z-index is gotten from this property every frame.
+         */
+        public var zIndexProperty:PropertyReference;
 		
 		// 0.1 to 1 = forground, fast scrolling
 		// 1 = fixed position
 		// 1.1 to 1.5 = background, slow scrolling
 		public var scrollFactor:Point = new Point(1, 1); 
 		protected var basePosition:Point;
-		
+		protected var _layerIndexDirty:Boolean = true;
+        protected var _zIndexDirty:Boolean = true;
 		protected var _transformDirty:Boolean = true;
 		
 		 protected var _transformMatrix:Matrix = new Matrix();
@@ -100,6 +111,21 @@ package com.starling.rendering2D
         {
             if(!owner)
                 return;
+				
+			// Sync our zIndex.
+            if (zIndexProperty)
+                zIndex = owner.getProperty(zIndexProperty, zIndex);
+            
+            // Sync our layerIndex.
+            if (layerIndexProperty)
+                layerIndex = owner.getProperty(layerIndexProperty, layerIndex);
+            
+            // Maybe we were in the right layer, but have the wrong zIndex.
+            if (_zIndexDirty && scene)
+            {
+                scene.getLayer(_layerIndex, true).markDirty();
+                _zIndexDirty = false;
+            }
                         
             // Position.
             var pos:Point = owner.getProperty(positionProperty) as Point;
@@ -127,6 +153,43 @@ package com.starling.rendering2D
 			if ( scrollFactor.x != 1 || scrollFactor.y != 1 )
 				_transformDirty = true;
 		}
+		
+		
+        public function get layerIndex():int
+        {
+            return _layerIndex;
+        }
+        
+        /**
+         * In what layer of the scene is this renderer drawn?
+         */
+        public function set layerIndex(value:int):void
+        {
+            if (_layerIndex == value)
+                return;
+            
+            _layerIndex = value;
+            _layerIndexDirty = true;
+        }
+        
+        public function get zIndex():int
+        {
+            return _zIndex;
+        }
+        
+        /**
+         * By default, layers are sorted based on the z-index, from small
+         * to large.
+         * @param value Z-index to set.
+         */
+        public function set zIndex(value:int):void
+        {
+            if (_zIndex == value)
+                return;
+            
+            _zIndex = value;
+            _zIndexDirty = true;
+        }
 		
 		
         public function get position():Point
