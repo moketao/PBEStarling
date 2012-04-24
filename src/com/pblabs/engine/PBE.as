@@ -334,16 +334,19 @@ package com.pblabs.engine
          * Make a new instance of an entity, setting appropriate fields based
          * on the parameters passed.
          * 
-         * @param entityName Identifier by which to look up the entity on the 
+		 * @param templateName Identifier by which to look up the entity on the 
          * 					 TemplateManager.
+		 * 
+         * @param entityName optional name to instantiate the entity with if name refers to a template
+		 * 
          * @param params     Properties to assign, by key/value. Keys can be
          * 					 strings or PropertyReferences. Values can be any
          * 					 type.
          */
-        public static function makeEntity(entityName:String, params:Object = null):IEntity
+        public static function makeEntity(templateName:String, entityName:String=null, params:Object = null):IEntity
         {
             // Create the entity.
-            var entity:IEntity = PBE.templateManager.instantiateEntity(entityName);
+            var entity:IEntity = PBE.templateManager.instantiateEntity(templateName, entityName);
             if(!entity)
                 return null;
             
