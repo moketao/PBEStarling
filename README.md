@@ -16,17 +16,14 @@ TODO
 ###StarlingScene###
 *   add zoom, minZoom, maxZoom
 *   add clipping rectangle (look into - Starling.context.setScissorRectangle )
-*   transform to/from world to screen coordinates
 *   possibily rename it to DisplayObjectScene to be consistent with pblabs rendering2D
 	
 ###DisplayObjectRenderer ###
-*   add zIndex
 *   add tint/brightness/contrast/hue properties
 *   add blurX/blurY
 	
 ###InputKey ###
 *   add support for starling Touch events
-*   add support for FP 11.2 right-click and middle click inputs
 	
 ###Animator###
 *   fix PING_PONG_ANIMATION
