@@ -169,6 +169,14 @@ package com.pblabs.engine.core
 				var alias:String=xml.attribute("alias");
 				if (alias == "")
 					alias = null;
+					
+				//And the includeIn type...
+				var includeIn:String = xml.attribute("includeIn");
+				if ( includeIn != "" && includeIn != Serializer.instance.includeInType )
+				{
+					Profiler.exit("instantiateEntityFromXML");
+					return null; //only create instances for entities that includeIn match the includeInType, if defined
+				}
 
                 // Make the IEntity instance.
 				var entity:IEntity;
@@ -526,7 +534,9 @@ package com.pblabs.engine.core
 				else if (objectXML.name() == "objectReference")
 				{
 					_inGroup = true;
-					group.push(instantiateEntity(childName));
+					var ent:IEntity = instantiateEntity(childName);
+					if( ent != null )
+						group.push(ent);
 					_inGroup=false;
 				}
 				else

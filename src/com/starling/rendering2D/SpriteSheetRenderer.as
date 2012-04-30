@@ -45,7 +45,7 @@ package com.starling.rendering2D
 			if( textures != null && textures.length > 0)
 			{
 				starlingMovieClip = new MovieClip(textures, fps);
-				this.displayObject = starlingMovieClip;
+				this.image = starlingMovieClip;
 				
 				if( scene != null )
 					scene.add( this );

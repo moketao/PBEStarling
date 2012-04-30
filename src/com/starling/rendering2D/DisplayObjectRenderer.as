@@ -1,22 +1,26 @@
 package com.starling.rendering2D 
 {
 	import com.pblabs.engine.components.AnimatedComponent;
+	import com.pblabs.engine.debug.Logger;
 	import com.pblabs.engine.entity.EntityComponent;
 	import com.pblabs.engine.entity.PropertyReference;
 	import com.pblabs.engine.PBUtil;
+	import com.starling.events.StarlingTouchEvent;
 	import flash.geom.Matrix;
 	import flash.geom.Point;
 	import starling.animation.IAnimatable;
 	import starling.core.Starling;
 	import starling.display.DisplayObject;
+	import starling.events.Touch;
+	import starling.events.TouchEvent;
+	import starling.events.TouchPhase;
 	
 	public class DisplayObjectRenderer extends EntityComponent implements IAnimatable 
 	{
-		
+		/**
+		 * The StarlingScene in which to add the DisplayObjectRenderer component to.
+		 */
 		public var scene:StarlingScene;
-		public var displayObject:DisplayObject;
-		private var _layerIndex:int = 0;
-		private var _zIndex:int = 0;
 		
 		/**
          * If set, the layer index is gotten from this property every frame.
@@ -28,27 +32,13 @@ package com.starling.rendering2D
          */
         public var zIndexProperty:PropertyReference;
 		
-		// 0.1 to 1 = forground, fast scrolling
-		// 1 = fixed position
-		// 1.1 to 1.5 = background, slow scrolling
+		/*
+		 * scrollFactor property for paralax effect
+		 * 0.1 to 1 = forground, fast scrolling
+		 * 1 = fixed position
+		 * 1.1 to 1.5 = background, slow scrolling
+		 */
 		public var scrollFactor:Point = new Point(1, 1); 
-		protected var basePosition:Point;
-		protected var _layerIndexDirty:Boolean = true;
-        protected var _zIndexDirty:Boolean = true;
-		protected var _transformDirty:Boolean = true;
-		
-		 protected var _transformMatrix:Matrix = new Matrix();
-		
-		private var _position:Point = new Point();
-		private var _scale:Point = new Point(1,1);
-		private var _rotation:Number = 0;
-		private var _rotationOffset:Number = 0;
-		private var _alpha:Number = 1;
-		
-		protected var _positionOffset:Point = new Point();
-		 protected var _registrationPoint:Point = new Point();
-		 
-		 
 		
 		/**
          * If set, position is gotten from this property every frame.
@@ -71,7 +61,44 @@ package com.starling.rendering2D
          */
         public var snapToNearestPixels:Boolean = true;
 		
-		//IAnimatable
+		//Protected variables
+		protected var basePosition:Point; //used for scroll factor
+		protected var _displayObject:DisplayObject;
+		protected var _layerIndex:int = 0;
+		protected var _layerIndexDirty:Boolean = true;
+		protected var _zIndex:int = 0;
+        protected var _zIndexDirty:Boolean = true;
+		protected var _transformDirty:Boolean = true;
+		protected var _transformMatrix:Matrix = new Matrix();
+		protected var _position:Point = new Point();
+		protected var _scale:Point = new Point(1,1);
+		protected var _rotation:Number = 0;
+		protected var _rotationOffset:Number = 0;
+		protected var _alpha:Number = 1;
+		protected var _positionOffset:Point = new Point();
+		protected var _registrationPoint:Point = new Point();
+		protected var _touchable:Boolean = false;
+		
+		public function get displayObject():DisplayObject
+		{
+			return _displayObject;
+		}
+		
+		public function set displayObject(value:DisplayObject):void
+		{
+			_displayObject = value;
+			
+			if ( _displayObject != null )
+			{
+				if ( touchable )
+					displayObject.addEventListener(TouchEvent.TOUCH, onTouch );
+			}
+		}
+		
+		/**
+		 * Starlings implementation of the IAnimatable class.  Called very frame.
+		 * @param	deltaTime
+		 */
 		public function advanceTime(deltaTime:Number):void 
 		{			
 			if (!displayObject)
@@ -93,7 +120,6 @@ package com.starling.rendering2D
 			
 			if ( displayObject != null && scene != null && scene.sceneView != null )
 				scene.add( this );
-				//scene.sceneView.addChild( displayObject );
 		}
 		
 		override protected function onRemove():void 
@@ -154,6 +180,20 @@ package com.starling.rendering2D
 				_transformDirty = true;
 		}
 		
+		/**
+		 * Indicates if this object (and its children) will receive starling touch events.
+		 * @default false
+		 */
+		public function get touchable():Boolean
+		{
+			return _touchable;
+		}
+		
+		public function set touchable(value:Boolean):void
+		{
+			_touchable = value;
+			_transformDirty = true;
+		}
 		
         public function get layerIndex():int
         {
@@ -364,26 +404,13 @@ package com.starling.rendering2D
             
             if(updateProps)
                 updateProperties();
-                 
-            /*
-            _transformMatrix.identity();
-            _transformMatrix.scale(_scale.x, _scale.y);
-            _transformMatrix.translate(-_registrationPoint.x * _scale.x, -_registrationPoint.y * _scale.y);
-            _transformMatrix.rotate(PBUtil.getRadiansFromDegrees(_rotation) + _rotationOffset);
-            _transformMatrix.translate(_position.x + _positionOffset.x, _position.y + _positionOffset.y);
-            
-            displayObject.transformationMatrix = _transformMatrix;
-            displayObject.alpha = _alpha;
-			//displayObject.blendMode = _blendMode;
-            displayObject.visible = (_alpha > 0);
-            
-			*/
 			
 			
 			displayObject.pivotX = _positionOffset.x;
 			displayObject.pivotY = _positionOffset.y;
 			
-			
+			if( displayObject.touchable != _touchable )
+				displayObject.touchable = _touchable;
 			
 			//update position with scrollFactor
 			if ( scrollFactor.x != 1 || scrollFactor.y != 1 )
@@ -417,6 +444,20 @@ package com.starling.rendering2D
             _transformDirty = false;
         }
 		
+		
+		protected function onTouch(e:TouchEvent):void
+		{
+			//TODO - dispatch events for hover, and up
+			
+			var touch:Touch = e.getTouch(e.target as DisplayObject, TouchPhase.BEGAN );
+			
+			if ( touch != null ) //touch down
+			{
+				var se:StarlingTouchEvent = new StarlingTouchEvent(StarlingTouchEvent.TOUCH_DOWN );
+				
+				owner.eventDispatcher.dispatchEvent(se);
+			}
+		}
 	}
 
 }
