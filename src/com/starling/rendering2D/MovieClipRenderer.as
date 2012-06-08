@@ -3,7 +3,7 @@ package com.starling.rendering2D
 	import com.pblabs.engine.serialization.TypeUtility;
 	import flash.display.MovieClip;
 	/**
-	 * 
+	 * @deprecated Use SpriteSheetRenderer with a SWFTextureAtlasComponent
 	 */
 	public class MovieClipRenderer extends SpriteSheetRenderer 
 	{

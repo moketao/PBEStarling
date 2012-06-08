@@ -64,6 +64,7 @@ package
 			 PBE.registerType(SpriteSheetRenderer );
 			 PBE.registerType(AnimatorComponent);
 			 PBE.registerType(FrameAnimator);
+			 PBE.registerType(SWFTextureAtlasComponent);
 			
 			 
 			 

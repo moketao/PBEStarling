@@ -14,11 +14,40 @@ package com.starling.rendering2D
 	
 	public class StarlingScene extends EntityComponent implements IAnimatable 
 	{
+		/**
+         * Minimum allowed zoom level.
+         * 
+         * @see zoom 
+         */
+        public var minZoom:Number = .1;
+        
+        /**
+         * Maximum allowed zoom level.
+         * 
+         * @see zoom 
+         */
+        public var maxZoom:Number = 1;
+        
+		/**
+         * If set, every frame, trackObject's position is read and assigned
+         * to the scene's position, so that the scene follows the trackObject.
+         */
 		public var trackObject:DisplayObjectRenderer;
-		public var trackOffset:Point = new Point();
-		public var trackLimitRectangle:Rectangle;
-		public var zoom:Number = 1;
 		
+		/**
+         * An x/y offset for adjusting the camera's focus around the tracked
+         * object.
+         * 
+         * Only applies if trackObject is set.
+         */
+		public var trackOffset:Point = new Point();
+		
+		/**
+		 * The rectangle to limit the tracking to, so the scene doesnt pan outside the bounds of the rect.
+		 */
+		public var trackLimitRectangle:Rectangle;
+		
+		protected var _zoom:Number = 1;
 		protected var _layers:Array = [];
 		protected var _sceneView:Sprite;
 		
@@ -26,7 +55,6 @@ package com.starling.rendering2D
         {
             if (!_sceneView )
 				_sceneView = Starling.current.stage.getChildAt(0) as Sprite;
-                //sceneView = PBE.findChild(_sceneViewName) as IUITarget;
             
             return _sceneView;
         }
@@ -51,23 +79,23 @@ package com.starling.rendering2D
 			{
 				trackObject.advanceTime(time); //amke sure the track object advances first, so the position does not stutter
 				
-				sceneView.x = -(trackObject.displayObject.x + trackOffset.x);
-				sceneView.y = -(trackObject.displayObject.y + trackOffset.y);
+				sceneView.x = -((trackObject.displayObject.x * zoom) + trackOffset.x );
+				sceneView.y = -((trackObject.displayObject.y * zoom) + trackOffset.y);
 				
 			}
-			
+			/* */
 			// Apply limit to camera movement.
             if(trackLimitRectangle != null)
             {
-            	var centeredLimitBounds:Rectangle = new Rectangle( trackLimitRectangle.x     + (sceneView.stage.stageWidth * 0.5) / zoom, trackLimitRectangle.y      + (sceneView.stage.stageHeight * 0.5) / zoom,
-            	                                                   trackLimitRectangle.width - (sceneView.stage.stageWidth / zoom)      , trackLimitRectangle.height - (sceneView.stage.stageHeight / zoom) );
-                
-                //position = new Point(PBUtil.clamp(position.x, -centeredLimitBounds.right, -centeredLimitBounds.left ), 
-                 //                    PBUtil.clamp(position.y, -centeredLimitBounds.bottom, -centeredLimitBounds.top) );
-				 
+                var centeredLimitBounds:Rectangle = new Rectangle( trackLimitRectangle.x     + (sceneView.stage.stageWidth * 0.5), trackLimitRectangle.y      + (sceneView.stage.stageHeight * 0.5) ,
+            	                                                  trackLimitRectangle.width * zoom - (sceneView.stage.stageWidth )      , trackLimitRectangle.height * zoom - (sceneView.stage.stageHeight ) );
+               
 				 sceneView.x = PBUtil.clamp(sceneView.x, -centeredLimitBounds.right, -centeredLimitBounds.left);
 				 sceneView.y = PBUtil.clamp(sceneView.y, -centeredLimitBounds.bottom, -centeredLimitBounds.top)
             }
+			
+			 //zoom
+			sceneView.scaleX = sceneView.scaleY = zoom;
 		}
 		
 		
@@ -76,8 +104,6 @@ package com.starling.rendering2D
             // Add to the appropriate layer.
             var layer:DisplayObjectSceneLayer = getLayer(dor.layerIndex, true);
             layer.add(dor);
-            //if (dor.displayObject)
-            //    _renderers[dor.displayObject] = dor;
         }
         
         public function remove(dor:DisplayObjectRenderer):void
@@ -87,8 +113,22 @@ package com.starling.rendering2D
                 return;
 
             layer.remove(dor);
-            //if (dor.displayObject)
-              //  delete _renderers[dor.displayObject];
+        }
+		
+		public function get zoom():Number
+        {
+            return _zoom;
+        }
+        
+        public function set zoom(value:Number):void
+        {
+            // Make sure our zoom level stays within the desired bounds
+            value = PBUtil.clamp(value, minZoom, maxZoom);
+            
+            if (_zoom == value)
+                return;
+                
+            _zoom = value;
         }
 		
 		public function get layerCount():int
@@ -147,13 +187,11 @@ package com.starling.rendering2D
 		
         public function transformWorldToScreen(inPos:Point):Point
         {
-			// return _rootSprite.localToGlobal(inPos); 
 			return sceneView.localToGlobal(inPos);
         }
         
         public function transformScreenToWorld(inPos:Point):Point
-        {
-            //return _rootSprite.globalToLocal(inPos);    
+        {   
 			return sceneView.globalToLocal(inPos);
         }
 		

@@ -56,6 +56,12 @@ package com.starling.rendering2D
         public var scaleProperty:PropertyReference;
 		
 		/**
+         * If set, alpha is gotten from this property every frame.
+         */
+        public var alphaProperty:PropertyReference;
+		
+		
+		/**
          * if set this to false, positions will be handeled with numbers insteed of integers
          * makes slow movement smoother for example
          */
@@ -78,6 +84,7 @@ package com.starling.rendering2D
 		protected var _positionOffset:Point = new Point();
 		protected var _registrationPoint:Point = new Point();
 		protected var _touchable:Boolean = false;
+		protected var _visible:Boolean = false;
 		
 		public function get displayObject():DisplayObject
 		{
@@ -166,6 +173,12 @@ package com.starling.rendering2D
             {
                 this.scale = scale;
             }
+			
+			//alpha
+			if ( alphaProperty != null )
+			{
+				this.alpha = owner.getProperty(alphaProperty) as Number;
+			}
             
             
             // Rotation.
@@ -367,6 +380,21 @@ package com.starling.rendering2D
 			_positionOffset.y = value.y;
 			
 			_transformDirty = true;
+		}
+		
+		public function get visible():Boolean
+		{
+			return _visible;
+		}
+		
+		public function set visible(value:Boolean):void
+		{
+			if ( _visible != value )
+			{
+				_visible = value;
+				alpha = _visible ? 1 : 0;
+			}
+			
 		}
 		
 		
