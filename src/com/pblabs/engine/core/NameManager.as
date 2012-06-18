@@ -105,6 +105,16 @@ package com.pblabs.engine.core
                 _registeredAliases[object] = [];
             _registeredAliases[object].push(alias);
         }
+		
+		/**
+		 * returns the alias that is registered for an object
+		 * @param	object
+		 * @return
+		 */
+		public function getAlias(object:IPBObject):String
+		{
+			return _registeredAliases[object];
+		}
         
         /**
          * Unregister an alias for an IPBObject 

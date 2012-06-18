@@ -2,12 +2,12 @@ package com.starling.input
 {
 	import com.pblabs.engine.entity.EntityComponent;
 	import com.pblabs.engine.PBE;
-	import com.starling.rendering2D.IStarlingApplication;
 	import flash.display.Bitmap;
 	import flash.display.BitmapData;
 	import flash.display.Sprite;
 	import flash.geom.Point;
 	import flash.geom.Rectangle;
+	import starling.core.Starling;
 	import starling.display.Image;
 	import starling.display.Quad;
 	import starling.display.Stage;
@@ -69,7 +69,7 @@ package com.starling.input
 			
 			//add the thumb control to the starling stage (Not the PBE StarlingScene)
 			
-			var stage:Stage = (PBE.mainClass as IStarlingApplication).starling.stage;
+			var stage:Stage = Starling.current.stage;
 			
 			var paddingX:int = 30;
 			var paddingY:int = 20;

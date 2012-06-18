@@ -172,7 +172,8 @@ package com.pblabs.engine.core
 					
 				//And the includeIn type...
 				var includeIn:String = xml.attribute("includeIn");
-				if ( includeIn != "" && includeIn != Serializer.instance.includeInType )
+				//if ( includeIn != "" && includeIn != Serializer.instance.includeInType )
+				if ( Serializer.instance.includeInType != null && Serializer.instance.includeInType != "" && includeIn != "" && includeIn.indexOf(Serializer.instance.includeInType) < 0 )
 				{
 					Profiler.exit("instantiateEntityFromXML");
 					return null; //only create instances for entities that includeIn match the includeInType, if defined
