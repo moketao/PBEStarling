@@ -1,3 +1,4 @@
 bin
 doc/api
 docs/downloads
+*.as3proj
