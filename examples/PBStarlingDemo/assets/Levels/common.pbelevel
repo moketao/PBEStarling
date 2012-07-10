@@ -104,18 +104,16 @@
       <animations childType="com.starling.animation.FrameAnimator">
         <idle type="">
           <!-- something wrong with ping-ping <animationType>PING_PONG_ANIMATION</animationType>-->
-		  <animationType>LOOP_ANIMATION</animationType>
-          <duration>1.6</duration>
+		  <animationType>NO_ANIMATION</animationType>
           <repeatCount>-1</repeatCount>
-          <startFrame type="int">1</startFrame>
-          <endFrame type="int">3</endFrame>
+          <startFrame type="int">11</startFrame>
         </idle>
 		<run type="">
           <animationType>LOOP_ANIMATION</animationType>
           <duration>1.0</duration>
           <repeatCount>-1</repeatCount>
-          <startFrame type="int">4</startFrame>
-          <endFrame type="int">19</endFrame>
+          <startFrame type="int">1</startFrame>
+          <endFrame type="int">15</endFrame>
         </run>
       </animations>
       <defaultAnimation>idle</defaultAnimation>
