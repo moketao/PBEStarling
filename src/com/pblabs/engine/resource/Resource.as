@@ -9,6 +9,7 @@
 package com.pblabs.engine.resource
 {
     import com.pblabs.engine.debug.Logger;
+	import flash.system.LoaderContext;
 
     import flash.display.Loader;
     import flash.events.Event;
@@ -66,6 +67,7 @@ package com.pblabs.engine.resource
 
             _filename = value;
         }
+		
 
         /**
          * Whether or not the resource has been loaded. This only marks whether loading has
@@ -98,6 +100,11 @@ package com.pblabs.engine.resource
         {
             return _referenceCount;
         }
+		
+		/**
+		 * Loads the asset and allows for code import
+		 */
+		public var allowCodeImport:Boolean = true;
 
         /**
          * The Loader object that was used to load this resource.
@@ -151,7 +158,9 @@ package com.pblabs.engine.resource
             loader.contentLoaderInfo.addEventListener(Event.COMPLETE, onLoadComplete);
             loader.contentLoaderInfo.addEventListener(IOErrorEvent.IO_ERROR, onDownloadError);
             loader.contentLoaderInfo.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onDownloadSecurityError);
-            loader.loadBytes(data);
+			var loaderContext:LoaderContext = new LoaderContext();
+			loaderContext.allowCodeImport = allowCodeImport;
+            loader.loadBytes(data, loaderContext);
 
             // Keep reference so the Loader isn't GC'ed.
             _loader = loader;
