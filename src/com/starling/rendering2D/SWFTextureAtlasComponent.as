@@ -201,11 +201,13 @@ package com.starling.rendering2D
 				}
 				if (itm.height + 1 > maxY)
 				{
-					maxY = itm.height + 1;
+					//maxY = itm.height + 1;
+					maxY = itm.height;
 				}
 				itm.x = xPos;
 				itm.y = yPos;
-				xPos += itm.width + 1;
+				//xPos += itm.width + 1;
+				xPos += itm.width;
 			}
 		}
 	

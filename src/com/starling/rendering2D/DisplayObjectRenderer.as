@@ -185,7 +185,7 @@ package com.starling.rendering2D
             if (rotationProperty)
             {
                 var rot:Number = owner.getProperty(rotationProperty) as Number;
-                this.rotation = rot;
+                this.rotation = PBUtil.getRadiansFromDegrees(rot);
             }
 			
 			
