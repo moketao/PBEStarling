@@ -49,6 +49,21 @@ package com.starling.rendering2D
 			}
 		}
 		
+		public function updateTexture(newTexture:TextureComponent):void
+		{
+ 			if ( newTexture != null && newTexture.isLoaded ) 
+			{
+				if (scene != null && scene.sceneView != null )
+				{
+					scene.remove(this);
+				textureComponent = newTexture;
+				image = new Image(textureComponent.texture);
+				this.updateTransform(true);
+				
+					scene.add( this );
+				}
+			}
+		}
 		
 		public function get image():Image
 		{

@@ -147,7 +147,7 @@ package com.pblabs.box2D
                 return new Point(pos.x * _manager.scale, pos.y * _manager.scale);
             }
             
-            return new Point(_bodyDef.position.x, _bodyDef.position.y);
+            return new Point(_bodyDef.position.x * _manager.scale, _bodyDef.position.y * _manager.scale);
         }
         
         public function set position(value:Point):void
@@ -396,6 +396,9 @@ package com.pblabs.box2D
                     _body = body;
                     _body.SetUserData(this);
                     _bodyDef.position.Multiply(_manager.scale);
+					
+					//test
+					var p:b2Vec2 = _body.GetPosition();
                     
                     linearVelocity = _linearVelocity;
                     angularVelocity = _angularVelocity;
