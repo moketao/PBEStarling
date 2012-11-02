@@ -324,14 +324,16 @@ package com.starling.rendering2D
             _transformDirty = true;
         }
 		
-		
+		/**
+         * Rotation in radians
+         */
         public function get rotation():Number
         {
             return _rotation;
         }
         
         /**
-         * Rotation in degrees, with 0 being Y+.
+         * Rotation in radians
          */
         public function set rotation(value:Number):void
         {

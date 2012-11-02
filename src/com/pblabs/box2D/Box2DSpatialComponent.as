@@ -160,6 +160,10 @@ package com.pblabs.box2D
                 position.Multiply(_manager.inverseScale);
                 _body.SetPositionAndAngle(position, _body.GetAngle());
             }
+			else if (isAdded ) //fix a bug where the body def doesnt get scaled properly if the component is created by a template while the world is locked (during a collision)
+			{
+				_bodyDef.position.Multiply(_manager.inverseScale);
+			}
         }
         
         public function get rotation():Number
@@ -405,6 +409,8 @@ package com.pblabs.box2D
                     
                     buildCollisionShapes();
                 });
+				
+			isAdded = true;
         }
         
         override protected function onRemove():void 
@@ -412,6 +418,8 @@ package com.pblabs.box2D
             _manager.removeBody(_body);
             _body = null;
         }
+		
+		private var isAdded:Boolean = false;
         
         private var _manager:Box2DManagerComponent = null;
         private var _collisionType:ObjectType = null;
