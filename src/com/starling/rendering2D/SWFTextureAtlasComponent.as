@@ -38,10 +38,25 @@ package com.starling.rendering2D
 		protected function onSwfLoaded(e:ResourceEvent=null):void
 		{
 			swf.removeEventListener(ResourceEvent.LOADED_EVENT, onSwfLoaded );
-			var mc:MovieClip = swf.getExportedAsset(movieClipClassName) as MovieClip;
-			textureAtlas = DynamicAtlas.fromMovieClipContainer(mc, scaleFactor);
-			eventDispatcher.dispatchEvent( new Event(Event.COMPLETE) );
+			_mc = swf.getExportedAsset(movieClipClassName) as MovieClip;
+			updateTexture();
 		}
+		
+		public function updateTexture():void
+		{
+			if ( movieClip != null )
+			{
+				textureAtlas = DynamicAtlas.fromMovieClipContainer(movieClip, scaleFactor);
+				eventDispatcher.dispatchEvent( new Event(Event.COMPLETE) );
+			}
+		}
+		
+		public function get movieClip():MovieClip
+		{
+			return _mc;
+		}
+		
+		private var _mc:MovieClip;
 	}
 
 }
@@ -397,7 +412,8 @@ package com.starling.rendering2D
 				// Scaling if needed (including filters)
 				if (scaleFactor != 1)
 				{
-					
+					var originalScaleX:Number = selected.scaleX;
+					var originalScaleY:Number = selected.scaleY;
 					selected.scaleX *= scaleFactor;
 					selected.scaleY *= scaleFactor;
 					
@@ -444,6 +460,13 @@ package com.starling.rendering2D
 				{
 					selected.gotoAndStop(m);
 					drawItem(selected, selected.name + "_" + appendIntToString(m - 1, 5), selected.name, selectedColorTransform, frameBounds);
+				}
+				
+				//reset the scale
+				if (scaleFactor != 1)
+				{
+					selected.scaleX = originalScaleX;
+					selected.scaleY = originalScaleY;
 				}
 			}
 			

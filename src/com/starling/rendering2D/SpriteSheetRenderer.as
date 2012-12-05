@@ -40,14 +40,24 @@ package com.starling.rendering2D
 		{
 			textureAtlasComponent.eventDispatcher.removeEventListener(Event.COMPLETE, onTextureComplete );
 			
+			updateTextureAtlas();
+			
+			
+		}
+		
+		public function updateTextureAtlas():void
+		{
 			var textures:Vector.<Texture> = textureAtlasComponent.textureAtlas.getTextures(prefix);
 			
 			if( textures != null && textures.length > 0)
 			{
+				if ( scene != null)
+					scene.remove(this);
+					
 				starlingMovieClip = new MovieClip(textures, fps);
 				this.image = starlingMovieClip;
 				
-				if( scene != null )
+				if ( scene != null)
 					scene.add( this );
 			}
 		}
