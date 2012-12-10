@@ -31,7 +31,7 @@ package starling.textures
         /** Helper object. */
         private static var sTexCoords:Point = new Point();
         
-        /** Creates a new subtexture containing the specified region (in pixels) of a parent 
+        /** Creates a new subtexture containing the specified region (in points) of a parent 
          *  texture. If 'ownsParent' is true, the parent texture will be disposed automatically
          *  when the subtexture is disposed. */
         public function SubTexture(parentTexture:Texture, region:Rectangle,
@@ -104,6 +104,9 @@ package starling.textures
         public override function get base():TextureBase { return mParent.base; }
         
         /** @inheritDoc */
+        public override function get format():String { return mParent.format; }
+        
+        /** @inheritDoc */
         public override function get width():Number { return mParent.width * mClipping.width; }
         
         /** @inheritDoc */
@@ -114,5 +117,9 @@ package starling.textures
         
         /** @inheritDoc */
         public override function get premultipliedAlpha():Boolean { return mParent.premultipliedAlpha; }
+        
+        /** @inheritDoc */
+        public override function get scale():Number { return mParent.scale; } 
+        
     }
 }

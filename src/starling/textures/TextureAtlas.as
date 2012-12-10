@@ -76,19 +76,24 @@ package starling.textures
             mAtlasTexture.dispose();
         }
         
-        private function parseAtlasXml(atlasXml:XML):void
+        /** This function is called by the constructor and will parse an XML in Starling's 
+         *  default atlas file format. Override this method to create custom parsing logic
+         *  (e.g. to support a different file format). */
+        protected function parseAtlasXml(atlasXml:XML):void
         {
+            var scale:Number = mAtlasTexture.scale;
+            
             for each (var subTexture:XML in atlasXml.SubTexture)
-            {                
+            {
                 var name:String        = subTexture.attribute("name");
-                var x:Number           = parseFloat(subTexture.attribute("x"));
-                var y:Number           = parseFloat(subTexture.attribute("y"));
-                var width:Number       = parseFloat(subTexture.attribute("width"));
-                var height:Number      = parseFloat(subTexture.attribute("height"));
-                var frameX:Number      = parseFloat(subTexture.attribute("frameX"));
-                var frameY:Number      = parseFloat(subTexture.attribute("frameY"));
-                var frameWidth:Number  = parseFloat(subTexture.attribute("frameWidth"));
-                var frameHeight:Number = parseFloat(subTexture.attribute("frameHeight"));
+                var x:Number           = parseFloat(subTexture.attribute("x")) / scale;
+                var y:Number           = parseFloat(subTexture.attribute("y")) / scale;
+                var width:Number       = parseFloat(subTexture.attribute("width")) / scale;
+                var height:Number      = parseFloat(subTexture.attribute("height")) / scale;
+                var frameX:Number      = parseFloat(subTexture.attribute("frameX")) / scale;
+                var frameY:Number      = parseFloat(subTexture.attribute("frameY")) / scale;
+                var frameWidth:Number  = parseFloat(subTexture.attribute("frameWidth")) / scale;
+                var frameHeight:Number = parseFloat(subTexture.attribute("frameHeight")) / scale;
                 
                 var region:Rectangle = new Rectangle(x, y, width, height);
                 var frame:Rectangle  = frameWidth > 0 && frameHeight > 0 ?
@@ -127,17 +132,32 @@ package starling.textures
             return textures;
         }
         
-        /** Creates a region for a subtexture and gives it a name. */
+        /** Returns the region rectangle associated with a specific name. */
+        public function getRegion(name:String):Rectangle
+        {
+            return mTextureRegions[name];
+        }
+        
+        /** Returns the frame rectangle of a specific region, or <code>null</code> if that region 
+         *  has no frame. */
+        public function getFrame(name:String):Rectangle
+        {
+            return mTextureFrames[name];
+        }
+        
+        /** Adds a named region for a subtexture (described by rectangle with coordinates in 
+         *  pixels) with an optional frame. */
         public function addRegion(name:String, region:Rectangle, frame:Rectangle=null):void
         {
             mTextureRegions[name] = region;
-            if (frame) mTextureFrames[name] = frame;
+            mTextureFrames[name]  = frame;
         }
         
         /** Removes a region with a certain name. */
         public function removeRegion(name:String):void
         {
             delete mTextureRegions[name];
+            delete mTextureFrames[name];
         }
     }
 }

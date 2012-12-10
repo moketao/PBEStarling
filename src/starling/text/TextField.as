@@ -19,10 +19,12 @@ package starling.text
     import flash.utils.Dictionary;
     
     import starling.core.RenderSupport;
+    import starling.core.Starling;
     import starling.display.DisplayObject;
     import starling.display.DisplayObjectContainer;
     import starling.display.Image;
     import starling.display.Quad;
+    import starling.display.QuadBatch;
     import starling.display.Sprite;
     import starling.events.Event;
     import starling.textures.Texture;
@@ -72,13 +74,16 @@ package starling.text
         private var mUnderline:Boolean;
         private var mAutoScale:Boolean;
         private var mKerning:Boolean;
+        private var mNativeFilters:Array;
         private var mRequiresRedraw:Boolean;
         private var mIsRenderedText:Boolean;
+        private var mTextBounds:Rectangle;
         
         private var mHitArea:DisplayObject;
-        private var mTextArea:DisplayObject;
-        private var mContents:DisplayObject;
         private var mBorder:DisplayObjectContainer;
+        
+        private var mImage:Image;
+        private var mQuadBatch:QuadBatch;
         
         // this object will be used for text rendering
         private static var sNativeTextField:flash.text.TextField = new flash.text.TextField();
@@ -90,7 +95,7 @@ package starling.text
         public function TextField(width:int, height:int, text:String, fontName:String="Verdana",
                                   fontSize:Number=12, color:uint=0x0, bold:Boolean=false)
         {
-            mText = text;
+            mText = text ? text : "";
             mFontSize = fontSize;
             mColor = color;
             mHAlign = HAlign.CENTER;
@@ -104,10 +109,6 @@ package starling.text
             mHitArea.alpha = 0.0;
             addChild(mHitArea);
             
-            mTextArea = new Quad(width, height);
-            mTextArea.visible = false;
-            addChild(mTextArea);
-            
             addEventListener(Event.FLATTEN, onFlatten);
         }
         
@@ -115,10 +116,8 @@ package starling.text
         public override function dispose():void
         {
             removeEventListener(Event.FLATTEN, onFlatten);
-            
-            if (mContents is Image)
-               (mContents as Image).texture.dispose();
-            
+            if (mImage) mImage.texture.dispose();
+            if (mQuadBatch) mQuadBatch.dispose();
             super.dispose();
         }
         
@@ -128,33 +127,34 @@ package starling.text
         }
         
         /** @inheritDoc */
-        public override function render(support:RenderSupport, alpha:Number):void
+        public override function render(support:RenderSupport, parentAlpha:Number):void
         {
             if (mRequiresRedraw) redrawContents();
-            super.render(support, alpha);
+            super.render(support, parentAlpha);
         }
         
         private function redrawContents():void
         {
-            if (mContents)
-                mContents.removeFromParent(true);
+            if (mIsRenderedText) createRenderedContents();
+            else                 createComposedContents();
             
-            mContents = mIsRenderedText ? createRenderedContents() : createComposedContents();
-            mContents.touchable = false;
             mRequiresRedraw = false;
-            
-            addChild(mContents);
         }
         
-        private function createRenderedContents():DisplayObject
+        private function createRenderedContents():void
         {
-            if (mText.length == 0) return new Sprite();
+            if (mQuadBatch)
+            { 
+                mQuadBatch.removeFromParent(true); 
+                mQuadBatch = null; 
+            }
             
-            var width:Number  = mHitArea.width;
-            var height:Number = mHitArea.height;
+            var scale:Number  = Starling.contentScaleFactor;
+            var width:Number  = mHitArea.width  * scale;
+            var height:Number = mHitArea.height * scale;
             
-            var textFormat:TextFormat = new TextFormat(
-                mFontName, mFontSize, 0xffffff, mBold, mItalic, mUnderline, null, null, mHAlign);
+            var textFormat:TextFormat = new TextFormat(mFontName, 
+                mFontSize * scale, mColor, mBold, mItalic, mUnderline, null, null, mHAlign);
             textFormat.kerning = mKerning;
             
             sNativeTextField.defaultTextFormat = textFormat;
@@ -166,6 +166,7 @@ package starling.text
             sNativeTextField.wordWrap = true;            
             sNativeTextField.text = mText;
             sNativeTextField.embedFonts = true;
+            sNativeTextField.filters = mNativeFilters;
             
             // we try embedded fonts first, non-embedded fonts are just a fallback
             if (sNativeTextField.textWidth == 0.0 || sNativeTextField.textHeight == 0.0)
@@ -189,16 +190,27 @@ package starling.text
             
             var bitmapData:BitmapData = new BitmapData(width, height, true, 0x0);
             bitmapData.draw(sNativeTextField, new Matrix(1, 0, 0, 1, 0, int(yOffset)-2));
+            sNativeTextField.text = "";
             
-            mTextArea.x = xOffset;
-            mTextArea.y = yOffset;
-            mTextArea.width = textWidth;
-            mTextArea.height = textHeight;
+            // update textBounds rectangle
+            if (mTextBounds == null) mTextBounds = new Rectangle();
+            mTextBounds.setTo(xOffset   / scale, yOffset    / scale,
+                              textWidth / scale, textHeight / scale);
             
-            var contents:Image = new Image(Texture.fromBitmapData(bitmapData));
-            contents.color = mColor;
+            var texture:Texture = Texture.fromBitmapData(bitmapData, false, false, scale);
             
-            return contents;
+            if (mImage == null) 
+            {
+                mImage = new Image(texture);
+                mImage.touchable = false;
+                addChild(mImage);
+            }
+            else 
+            { 
+                mImage.texture.dispose();
+                mImage.texture = texture; 
+                mImage.readjustSize(); 
+            }
         }
         
         private function autoScaleNativeTextField(textField:flash.text.TextField):void
@@ -217,22 +229,31 @@ package starling.text
             }
         }
         
-        private function createComposedContents():DisplayObject
+        private function createComposedContents():void
         {
+            if (mImage) 
+            { 
+                mImage.removeFromParent(true); 
+                mImage = null; 
+            }
+            
+            if (mQuadBatch == null) 
+            { 
+                mQuadBatch = new QuadBatch(); 
+                mQuadBatch.touchable = false;
+                addChild(mQuadBatch); 
+            }
+            else
+                mQuadBatch.reset();
+            
             var bitmapFont:BitmapFont = sBitmapFonts[mFontName];
             if (bitmapFont == null) throw new Error("Bitmap font not registered: " + mFontName);
             
-            var contents:DisplayObject = bitmapFont.createDisplayObject(
+            bitmapFont.fillQuadBatch(mQuadBatch,
                 mHitArea.width, mHitArea.height, mText, mFontSize, mColor, mHAlign, mVAlign,
                 mAutoScale, mKerning);
             
-            var textBounds:Rectangle = (contents as DisplayObjectContainer).bounds;
-            mTextArea.x = textBounds.x;
-            mTextArea.y = textBounds.y;
-            mTextArea.width  = textBounds.width;
-            mTextArea.height = textBounds.height;
-            
-            return contents;
+            mTextBounds = null; // will be created on demand
         }
         
         private function updateBorder():void
@@ -251,7 +272,7 @@ package starling.text
             bottomLine.width = width; bottomLine.height = 1;
             leftLine.width   = 1;     leftLine.height   = height;
             rightLine.width  = 1;     rightLine.height  = height;
-            rightLine.x  = width - 1;
+            rightLine.x  = width  - 1;
             bottomLine.y = height - 1;
             topLine.color = rightLine.color = bottomLine.color = leftLine.color = mColor;
         }
@@ -260,7 +281,8 @@ package starling.text
         public function get textBounds():Rectangle
         {
             if (mRequiresRedraw) redrawContents();
-            return mTextArea.getBounds(parent);
+            if (mTextBounds == null) mTextBounds = mQuadBatch.getBounds(mQuadBatch);
+            return mTextBounds.clone();
         }
         
         /** @inheritDoc */
@@ -293,6 +315,7 @@ package starling.text
         public function get text():String { return mText; }
         public function set text(value:String):void
         {
+            if (value == null) value = "";
             if (mText != value)
             {
                 mText = value;
@@ -306,6 +329,9 @@ package starling.text
         {
             if (mFontName != value)
             {
+                if (value == BitmapFont.MINI && sBitmapFonts[value] == undefined)
+                    registerBitmapFont(new BitmapFont());
+                
                 mFontName = value;
                 mRequiresRedraw = true;
                 mIsRenderedText = sBitmapFonts[value] == undefined;
@@ -333,14 +359,7 @@ package starling.text
             {
                 mColor = value;
                 updateBorder();
-                
-                if (mContents)
-                {
-                   if (mIsRenderedText)
-                       (mContents as Image).color = value;
-                   else
-                       mRequiresRedraw = true;
-                }
+                mRequiresRedraw = true;
             }
         }
         
@@ -449,13 +468,27 @@ package starling.text
                 mRequiresRedraw = true;
             }
         }
-        
-        /** Makes a bitmap font available at any text field. Set the <code>fontName</code> property
-         *  of a text field to the <code>name</code> value of the bitmap font to use the bitmap
-         *  font for rendering. */ 
-        public static function registerBitmapFont(bitmapFont:BitmapFont):void
+
+        /** The native Flash BitmapFilters to apply to this TextField. 
+         *  Only available when using standard (TrueType) fonts! */
+        public function get nativeFilters():Array { return mNativeFilters; }
+        public function set nativeFilters(value:Array) : void
         {
-            sBitmapFonts[bitmapFont.name] = bitmapFont;
+            if (!mIsRenderedText)
+                throw(new Error("The TextField.nativeFilters property cannot be used on Bitmap fonts."));
+			
+            mNativeFilters = value.concat();
+            mRequiresRedraw = true;
+        }
+        
+        /** Makes a bitmap font available at any text field, identified by its <code>name</code>.
+         *  Per default, the <code>name</code> property of the bitmap font will be used, but you 
+         *  can pass a custom name, as well. @returns the name of the font. */
+        public static function registerBitmapFont(bitmapFont:BitmapFont, name:String=null):String
+        {
+            if (name == null) name = bitmapFont.name;
+            sBitmapFonts[name] = bitmapFont;
+            return name;
         }
         
         /** Unregisters the bitmap font and, optionally, disposes it. */
@@ -465,6 +498,12 @@ package starling.text
                 sBitmapFonts[name].dispose();
             
             delete sBitmapFonts[name];
+        }
+        
+        /** Returns a registered bitmap font (or null, if the font has not been registered). */
+        public static function getBitmapFont(name:String):BitmapFont
+        {
+            return sBitmapFonts[name];
         }
     }
 }
