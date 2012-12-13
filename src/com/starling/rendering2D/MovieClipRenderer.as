@@ -7,9 +7,10 @@ package com.starling.rendering2D
 	 */
 	public class MovieClipRenderer extends SpriteSheetRenderer 
 	{
+		/*
 		public var isAnimated:Boolean = false;
 		
-		private var _movieClip:MovieClip;
+		//private var _movieClip:MovieClip;
 		
 		public var scaleFactor:Number = 1.0;
 		
@@ -44,6 +45,7 @@ package com.starling.rendering2D
 			if ( isAnimated && starlingMovieClip != null)
 				starlingMovieClip.advanceTime(deltaTime);
 		}
+		*/
 		
 	}
 

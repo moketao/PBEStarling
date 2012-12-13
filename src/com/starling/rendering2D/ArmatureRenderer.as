@@ -1,5 +1,7 @@
 package com.starling.rendering2D 
 {
+	import com.pblabs.engine.core.ITickedObject;
+	import com.pblabs.engine.PBE;
 	import com.pblabs.engine.resource.DataResource;
 	import com.pblabs.engine.resource.ResourceEvent;
 	import dragonBones.Armature;
@@ -11,15 +13,18 @@ package com.starling.rendering2D
 	 * ...
 	 * @author Zo
 	 */
-	public class ArmatureRenderer extends DisplayObjectRenderer 
+	public class ArmatureRenderer extends DisplayObjectRenderer implements ITickedObject
 	{
 		
 		/**
 		 * The Skeleton Animation swf output (with xml merged) that was exported from Dragon Bones 
 		 */
-		public var resource:DataResource;
+		//public var resource:DataResource;
 		
 		public var armatureName:String;
+		
+		public var factory:FactoryComponent;
+		
 		public var defaultAnimation:String;
 		
 		public function get armature():Armature
@@ -27,52 +32,28 @@ package com.starling.rendering2D
 			return _armature;
 		}
 		
-		
 		override protected function onAdd():void 
 		{
 			super.onAdd();
-			if ( resource != null && resource.isLoaded )
-			{
-				onResourceComplete();
-			}
-			else if ( resource != null )
-			{
-				resource.addEventListener(ResourceEvent.LOADED_EVENT, onResourceComplete );
-				resource.load(resource.filename);
-			}
+			PBE.processManager.addTickedObject(this);
 		}
 		
-		override protected function onRemove():void 
+		public function onTick(deltaTime:Number):void
 		{
-			super.onRemove();
-		}
-		
-		override public function advanceTime(deltaTime:Number):void 
-		{
-			super.advanceTime(deltaTime);
+			
+			if ( armature == null && factory != null && factory.isReady )
+				onFactoryReady();
 			
 			if ( armature != null )
 				armature.update(); 
 		}
 		
-		private function onResourceComplete(e:Event = null):void 
+		protected function onFactoryReady(e:Event = null):void
 		{
-			resource.removeEventListener(ResourceEvent.LOADED_EVENT, onResourceComplete );
-			
-			factory.addEventListener(Event.COMPLETE, textureCompleteHandler);
-			factory.parseData(resource.data); //calls the textureCompleteHandler when finished
-		}
-		
-		private function textureCompleteHandler(e:Event=null):void 
-		{
-			if( resource != null )
-				resource.removeEventListener(ResourceEvent.LOADED_EVENT, textureCompleteHandler );
-			
-			factory.removeEventListener(Event.COMPLETE, textureCompleteHandler);
 			
 			if ( armatureName != null )
 			{
-				_armature = factory.buildArmature(armatureName);
+				_armature = factory.factory.buildArmature(armatureName);
 				armatureClip = armature.display as Sprite;
 				this.displayObject = armatureClip;
 				
@@ -86,8 +67,9 @@ package com.starling.rendering2D
 				
 			}
 		}
+		
+		
 
-		protected var factory:StarlingFactory = new StarlingFactory();;
 		protected var armatureClip:Sprite;
 		protected var _armature:Armature;
 	}

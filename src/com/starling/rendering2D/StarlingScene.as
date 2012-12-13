@@ -74,7 +74,7 @@ package com.starling.rendering2D
                 Logger.warn(this, "updateTransform", "sceneView is null, so we aren't rendering."); 
                 return;
             }
-			
+			/*
 			if ( trackObject && trackObject.displayObject != null )
 			{
 				trackObject.advanceTime(time); //amke sure the track object advances first, so the position does not stutter
@@ -83,7 +83,7 @@ package com.starling.rendering2D
 				sceneView.y = -((trackObject.displayObject.y * zoom) + trackOffset.y);
 				
 			}
-			/* */
+			
 			// Apply limit to camera movement.
             if(trackLimitRectangle != null)
             {
@@ -94,8 +94,47 @@ package com.starling.rendering2D
 				 sceneView.y = PBUtil.clamp(sceneView.y, -centeredLimitBounds.bottom, -centeredLimitBounds.top)
             }
 			
+			
+			
 			 //zoom
 			sceneView.scaleX = sceneView.scaleY = zoom;
+			*/
+			
+			var trackToRotation:Boolean = true;
+			if ( trackObject && trackObject.displayObject != null)
+			{
+				trackObject.advanceTime(time);
+				sceneView.pivotX = trackObject.position.x;
+				sceneView.pivotY = trackObject.position.y;
+				
+				/*
+				var rDelta:Number = PBUtil.getRadianShortDelta( -trackObject.rotation, sceneView.rotation  );
+				var rDeltaSmooth:Number = rDelta > 0 ? 0.02 : -0.02;//rDelta * 0.01;
+				if ( rDelta < 0.02 && rDelta > -0.02)
+				{
+					trace("fix rotation");
+					sceneView.rotation = -trackObject.rotation;
+				}
+				else
+					sceneView.rotation -= rDeltaSmooth;
+				*/
+					
+				if( trackToRotation )
+					sceneView.rotation = PBUtil.getRadiansFromDegrees(-trackObject.rotation);
+			
+				
+				sceneView.x = -trackOffset.x;
+				sceneView.y = -trackOffset.y;
+				
+				//sceneView.x = -((trackObject.displayObject.x * zoom) + trackOffset.x );
+				//sceneView.y = -((trackObject.displayObject.y * zoom) + trackOffset.y);
+				
+			
+				
+			}
+			 //zoom
+			if( !isNaN(zoom) )
+				sceneView.scaleX = sceneView.scaleY = zoom;
 		}
 		
 		
