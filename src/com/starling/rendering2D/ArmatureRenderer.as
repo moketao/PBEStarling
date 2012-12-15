@@ -38,6 +38,15 @@ package com.starling.rendering2D
 			PBE.processManager.addTickedObject(this);
 		}
 		
+		override protected function onRemove():void 
+		{
+			super.onRemove();
+			if( armature != null )
+				armature.dispose();
+				
+			PBE.processManager.removeTickedObject(this);
+		}
+		
 		public function onTick(deltaTime:Number):void
 		{
 			
@@ -69,7 +78,6 @@ package com.starling.rendering2D
 		}
 		
 		
-
 		protected var armatureClip:Sprite;
 		protected var _armature:Armature;
 	}
