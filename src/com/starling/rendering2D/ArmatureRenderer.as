@@ -16,11 +16,6 @@ package com.starling.rendering2D
 	public class ArmatureRenderer extends DisplayObjectRenderer implements ITickedObject
 	{
 		
-		/**
-		 * The Skeleton Animation swf output (with xml merged) that was exported from Dragon Bones 
-		 */
-		//public var resource:DataResource;
-		
 		public var armatureName:String;
 		
 		public var factory:FactoryComponent;
