@@ -9,7 +9,8 @@ package com.starling.rendering2D
 	import starling.extensions.PDParticleSystem;
 	import starling.textures.Texture;
 	/**
-	 * ...
+	 * Particle Rendering component based on the starling Particle System extension
+	 * http://wiki.starling-framework.org/extensions/particlesystem
 	 * @author Zo
 	 */
 	public class ParticleRenderer extends DisplayObjectRenderer 
@@ -20,6 +21,8 @@ package com.starling.rendering2D
 		public var particleSystem:PDParticleSystem;
 		
 		public var emitterPositionProperty:PropertyReference;
+		
+		public var duration:Number = Number.MAX_VALUE;
 		
 		
 		override protected function onAdd():void 
@@ -68,10 +71,7 @@ package com.starling.rendering2D
 				if ( scene )
 					scene.add(this);
 					
-				//testing
-				//scene.sceneView.addChild( particleSystem );
-				//Starling.current.stage.addChild( particleSystem );
-				particleSystem.start();
+				particleSystem.start(duration);
 			}
 		}
 		
