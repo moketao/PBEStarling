@@ -38,6 +38,14 @@ package com.starling.rendering2D
 				textureComponent.eventDispatcher.addEventListener(Event.COMPLETE, onTextureComplete );
 		}
 		
+		override protected function onRemove():void 
+		{
+			super.onRemove();
+			
+			if ( textureComponent )
+				textureComponent.eventDispatcher.removeEventListener(Event.COMPLETE, onTextureComplete );
+		}
+		
 		private function onTextureComplete(e:Event=null):void
 		{
 			textureComponent.eventDispatcher.removeEventListener(Event.COMPLETE, onTextureComplete );

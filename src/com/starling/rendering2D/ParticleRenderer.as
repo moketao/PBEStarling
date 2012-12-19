@@ -48,6 +48,9 @@ package com.starling.rendering2D
 				
 			if ( config )
 				config.removeEventListener(ResourceEvent.LOADED_EVENT, init );
+			
+			if( particleSystem )
+				particleSystem.dispose();
 		}
 		
 		
@@ -91,6 +94,7 @@ package com.starling.rendering2D
 		
 		override public function advanceTime(deltaTime:Number):void 
 		{
+			trace(owner.name, "particle advanceTime");
 			super.advanceTime(deltaTime);
 			if( particleSystem )
 				particleSystem.advanceTime(deltaTime);

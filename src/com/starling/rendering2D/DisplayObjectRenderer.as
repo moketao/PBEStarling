@@ -136,8 +136,10 @@ package com.starling.rendering2D
 			Starling.juggler.remove(this);
 			
 			if ( displayObject != null && scene != null && scene.sceneView != null )
-				scene.remove( this );
-				//scene.sceneView.removeChild( displayObject );
+				scene.remove( this ); 
+			
+			if ( displayObject )
+				displayObject.dispose();
 		}
 		
 		protected function updateProperties():void
