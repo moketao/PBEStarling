@@ -88,13 +88,10 @@ package com.starling.rendering2D
 				particleSystem.emitterX = value.x;
 				particleSystem.emitterY = value.y;
 			}
-				
-			//_transformDirty = true;
 		}
 		
 		override public function advanceTime(deltaTime:Number):void 
 		{
-			trace(owner.name, "particle advanceTime");
 			super.advanceTime(deltaTime);
 			if( particleSystem )
 				particleSystem.advanceTime(deltaTime);
