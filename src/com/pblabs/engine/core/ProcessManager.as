@@ -14,6 +14,8 @@ package com.pblabs.engine.core
     import com.pblabs.engine.serialization.TypeUtility;
     import flash.events.Event;
     import flash.utils.getTimer;
+	import starling.animation.IAnimatable;
+	import starling.core.Starling;
     
     
     /**
@@ -30,7 +32,7 @@ package com.pblabs.engine.core
      * @see ITickedObject
      * @see IAnimatedObject
      */
-    public class ProcessManager
+    public class ProcessManager implements IAnimatable
     {
         /**
          * If true, disables warnings about losing ticks.
@@ -147,10 +149,10 @@ package com.pblabs.engine.core
             
             lastTime = -1.0;
             elapsed = 0.0;
-            PBE.mainStage.addEventListener(Event.ENTER_FRAME, onFrame);
+			Starling.juggler.add(this);
             started = true;
         }
-        
+		 
         /**
          * Stops the process manager. This is automatically called when the last object
          * is removed from the process manager, but can also be called manually to, for
@@ -165,7 +167,7 @@ package com.pblabs.engine.core
             }
             
             started = false;
-            PBE.mainStage.removeEventListener(Event.ENTER_FRAME, onFrame);
+			Starling.juggler.remove(this);
         }
         
         /**
@@ -393,13 +395,15 @@ package com.pblabs.engine.core
             
             Logger.warn(object, "RemoveProcessObject", "This object has not been added to the process manager.");
         }
-        
+		
+		
         /**
          * Main callback; this is called every frame and allows game logic to run. 
          */
-        private function onFrame(event:Event):void
+		public function advanceTime(time:Number):void
         {
-            // This is called from a system event, so it had better be at the 
+			
+			// This is called from a system event, so it had better be at the 
             // root of the profiler stack!
             Profiler.ensureAtRoot();
             
@@ -416,8 +420,8 @@ package com.pblabs.engine.core
             advance(deltaTime);
             
             // Note new last time.
-            lastTime = currentTime;
-        }
+			lastTime = currentTime;
+		}
         
         private function advance(deltaTime:Number, suppressSafety:Boolean = false):void
         {

@@ -90,9 +90,9 @@ package com.starling.rendering2D
 			}
 		}
 		
-		override public function advanceTime(deltaTime:Number):void 
+		override public function onFrame(deltaTime:Number):void 
 		{
-			super.advanceTime(deltaTime);
+			super.onFrame(deltaTime);
 			if( particleSystem )
 				particleSystem.advanceTime(deltaTime);
 				
@@ -108,7 +108,7 @@ package com.starling.rendering2D
 			}
 		}
 		
-		private var _emitterPosition:Point = new Point();
+		protected var _emitterPosition:Point = new Point();
 	}
 
 }

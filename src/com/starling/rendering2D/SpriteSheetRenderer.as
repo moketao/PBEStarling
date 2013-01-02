@@ -21,7 +21,7 @@ package com.starling.rendering2D
 		
 		public var starlingMovieClip:MovieClip;
 		
-		private var _spriteIndex:int;
+		protected var _spriteIndex:int;
 		
 		override protected function onAdd():void 
 		{
@@ -32,13 +32,13 @@ package com.starling.rendering2D
 			else if ( textureAtlasComponent != null && textureAtlasComponent.isLoaded )
 				onTextureComplete();
 			else if( textureAtlasComponent != null ) //texture isn't loaded
-				textureAtlasComponent.eventDispatcher.addEventListener(Event.COMPLETE, onTextureComplete );
+				textureAtlasComponent.eventDispatcher.addEventListener(Event.COMPLETE, onTextureAtlasComplete );
 			
 		}
 		
-		private function onTextureComplete(e:Event=null):void
+		protected function onTextureAtlasComplete(e:Event=null):void
 		{
-			textureAtlasComponent.eventDispatcher.removeEventListener(Event.COMPLETE, onTextureComplete );
+			textureAtlasComponent.eventDispatcher.removeEventListener(Event.COMPLETE, onTextureAtlasComplete );
 			
 			updateTextureAtlas();
 			

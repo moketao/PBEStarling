@@ -36,7 +36,7 @@ package com.starling.rendering2D
 			}
 		}
 		
-		private function onImageResourceLoaded(e:ResourceEvent=null):void
+		protected function onImageResourceLoaded(e:ResourceEvent=null):void
 		{
 			_image.removeEventListener(ResourceEvent.LOADED_EVENT, onImageResourceLoaded );
 			texture  = Texture.fromBitmap( image.image );

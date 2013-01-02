@@ -14,7 +14,7 @@ package com.pblabs.stupidSampleGame
     import com.pblabs.engine.core.InputMap;
     import com.pblabs.engine.entity.EntityComponent;
     import com.pblabs.engine.entity.PropertyReference;
-	import com.starling.animation.AnimatorComponent;
+	import com.pblabs.animation.AnimatorComponent;
 	import com.starling.rendering2D.DisplayObjectRenderer;
 	import com.starling.rendering2D.StarlingScene;
     

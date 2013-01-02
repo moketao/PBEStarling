@@ -23,8 +23,8 @@ package com.starling.rendering2D
 		public var textureComponent:TextureComponent;
 		
 		
-		private var _color:int = -1;
-		private var _image:Image;
+		protected var _color:int = -1;
+		protected var _image:Image;
 		
 		override protected function onAdd():void 
 		{
@@ -46,7 +46,7 @@ package com.starling.rendering2D
 				textureComponent.eventDispatcher.removeEventListener(Event.COMPLETE, onTextureComplete );
 		}
 		
-		private function onTextureComplete(e:Event=null):void
+		protected function onTextureComplete(e:Event=null):void
 		{
 			textureComponent.eventDispatcher.removeEventListener(Event.COMPLETE, onTextureComplete );
 			if ( textureComponent.texture != null )
@@ -64,10 +64,12 @@ package com.starling.rendering2D
 				if (scene != null && scene.sceneView != null )
 				{
 					scene.remove(this);
-				textureComponent = newTexture;
-				image = new Image(textureComponent.texture);
-				this.updateTransform(true);
-				
+					textureComponent = newTexture;
+					if( image )
+						image.dispose();
+					image = new Image(textureComponent.texture);
+					this.updateTransform(true);
+					
 					scene.add( this );
 				}
 			}

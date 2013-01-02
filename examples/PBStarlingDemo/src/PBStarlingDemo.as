@@ -9,9 +9,9 @@ package
    import com.pblabs.rendering2D.spritesheet.SpriteSheetComponent;
    import com.pblabs.rendering2D.ui.SceneView;
    import com.pblabs.stupidSampleGame.DudeController;
-   import com.starling.animation.FrameAnimator;
+   import com.pblabs.animation.FrameAnimator;
    import com.starling.rendering2D.*;
-   import com.starling.animation.AnimatorComponent;
+   import com.pblabs.animation.AnimatorComponent;
    import starling.core.Starling;
     
     import flash.display.Sprite;

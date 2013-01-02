@@ -1,11 +1,16 @@
 package com.starling.rendering2D 
 {
 	import com.pblabs.engine.core.ITickedObject;
+	import com.pblabs.engine.debug.Logger;
 	import com.pblabs.engine.PBE;
 	import com.pblabs.engine.resource.DataResource;
 	import com.pblabs.engine.resource.ResourceEvent;
 	import dragonBones.Armature;
+	import dragonBones.Bone;
 	import dragonBones.factorys.StarlingFactory;
+	import flash.geom.Point;
+	import flash.geom.Rectangle;
+	import starling.display.DisplayObject;
 	import starling.display.Sprite;
 	import flash.events.Event;
 	
@@ -15,6 +20,7 @@ package com.starling.rendering2D
 	 */
 	public class ArmatureRenderer extends DisplayObjectRenderer implements ITickedObject
 	{
+		public static var ARMATURE_READY:String = "armature_ready";
 		
 		public var armatureName:String;
 		
@@ -61,14 +67,17 @@ package com.starling.rendering2D
 				armatureClip = armature.display as Sprite;
 				this.displayObject = armatureClip;
 				
+				this.updateTransform(true);
+				
 				if ( defaultAnimation != null )
-					armature.animation.gotoAndPlay(defaultAnimation);
+					armature.animation.gotoAndPlay(defaultAnimation, 0, 0);
 					
 				armature.update();
 				
 				if ( displayObject != null && scene != null && scene.sceneView != null )
 					scene.add( this );
-				
+					
+				owner.eventDispatcher.dispatchEvent(new Event(ArmatureRenderer.ARMATURE_READY ) );
 			}
 		}
 		

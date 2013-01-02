@@ -42,6 +42,11 @@ package com.pblabs.engine.resource.provider
             
             return _instance;
         }
+		
+		public function get bulkLoader():BulkLoader
+		{
+			return this.loader;
+		}
         
 		// ------------------------------------------------------------
 		// public methods

@@ -15,12 +15,17 @@ package com.starling.rendering2D
 	import starling.events.TouchEvent;
 	import starling.events.TouchPhase;
 	
-	public class DisplayObjectRenderer extends EntityComponent implements IAnimatable 
+	public class DisplayObjectRenderer extends AnimatedComponent //extends EntityComponent implements IAnimatable 
 	{
 		/**
 		 * The StarlingScene in which to add the DisplayObjectRenderer component to.
 		 */
 		public var scene:StarlingScene;
+		
+		/**
+		 * If true, the display object renderer will be added to a Heads Up Display layer above the scene that is relative to the screen
+		 */
+		public var isHUD:Boolean = false;
 		
 		/**
          * If set, the layer index is gotten from this property every frame.
@@ -103,10 +108,9 @@ package com.starling.rendering2D
 		}
 		
 		/**
-		 * Starlings implementation of the IAnimatable class.  Called very frame.
-		 * @param	deltaTime
+		 * Called every frame
 		 */
-		public function advanceTime(deltaTime:Number):void 
+		override public function onFrame(deltaTime:Number):void 
 		{			
 			if (!displayObject)
                 return;
@@ -123,7 +127,7 @@ package com.starling.rendering2D
 		{
 			super.onAdd();
 			
-			Starling.juggler.add(this); //add to the starling juggler, calling advanceTime every frame
+			//Starling.juggler.add(this); //add to the starling juggler, calling advanceTime every frame
 			
 			if ( displayObject != null && scene != null && scene.sceneView != null )
 				scene.add( this );
@@ -133,7 +137,7 @@ package com.starling.rendering2D
 		{
 			super.onRemove();
 			
-			Starling.juggler.remove(this);
+			//Starling.juggler.remove(this);
 			
 			if ( displayObject != null && scene != null && scene.sceneView != null )
 				scene.remove( this ); 
@@ -245,6 +249,42 @@ package com.starling.rendering2D
             _zIndex = value;
             _zIndexDirty = true;
         }
+		
+		public function get scaleY():Number
+		{
+			return _scale.y;
+		}
+		
+		public function get scaleX():Number
+		{
+			return _scale.x;
+		}
+		public function set scaleX(value:Number):void
+		{
+			scale = new Point( value, scaleY );
+		}
+		public function set scaleY(value:Number):void
+		{
+			scale = new Point( scaleX, value );
+		}
+		//X / Y wrappers for position
+		public function get y():Number
+		{
+			return _position.y;
+		}
+		
+		public function get x():Number
+		{
+			return _position.x;
+		}
+		public function set x(value:Number):void
+		{
+			position = new Point( value, y );
+		}
+		public function set y(value:Number):void
+		{
+			position = new Point( x, value );
+		}
 		
 		
         public function get position():Point
@@ -477,17 +517,85 @@ package com.starling.rendering2D
             _transformDirty = false;
         }
 		
-		
+		private var isOver:Boolean = false;
 		protected function onTouch(e:TouchEvent):void
 		{
-			//TODO - dispatch events for hover, and up
+			//dispatch events for hover over, out, touch down, and up
 			
-			var touch:Touch = e.getTouch(e.target as DisplayObject, TouchPhase.BEGAN );
-			
-			if ( touch != null ) //touch down
+			var d:DisplayObject = e.target as DisplayObject;
+			var touches:Vector.<Touch> = e.getTouches(d );
+			var se:StarlingTouchEvent;
+			var isHovering:Boolean = false;
+			var location:Point;
+			for each ( var t:Touch in touches)
 			{
-				var se:StarlingTouchEvent = new StarlingTouchEvent(StarlingTouchEvent.TOUCH_DOWN );
-				
+				location = t.getLocation(d);
+				//trace(t.phase);
+				switch(t.phase)
+				{
+					case "hover":
+						isHovering = true;
+						if ( !isOver )
+						{
+							
+							isOver = true;
+							se = new StarlingTouchEvent(StarlingTouchEvent.HOVER_OVER, this );
+							owner.eventDispatcher.dispatchEvent(se);
+						}
+						break;
+					case "began":
+						isHovering = true;
+						se = new StarlingTouchEvent(StarlingTouchEvent.DOWN, this );
+						owner.eventDispatcher.dispatchEvent(se);
+						break;
+					case "ended":
+						// check if it was released outside
+						if (d.hitTest(location) )
+						{
+							//still in the button, its a click
+							isHovering = true;
+							se = new StarlingTouchEvent(StarlingTouchEvent.CLICK, this );
+							owner.eventDispatcher.dispatchEvent(se);
+						}
+						else
+						{
+							//released outside of the button
+							se = new StarlingTouchEvent(StarlingTouchEvent.RELEASE_OUTSIDE, this );
+							owner.eventDispatcher.dispatchEvent(se);
+						}
+						
+						break;
+					case "moved":
+						// if it has beend ragged off of the display
+						if (d.hitTest(location) )
+						{
+							isHovering = true;
+							//check if they moved back in after dragging out
+							if ( !isOver )
+							{
+								
+								isOver = true;
+								se = new StarlingTouchEvent(StarlingTouchEvent.HOVER_OVER, this );
+								owner.eventDispatcher.dispatchEvent(se);
+							}
+						}
+						else
+						{
+							isOver = false;
+							se = new StarlingTouchEvent(StarlingTouchEvent.DRAG_OUTSIDE, this );
+							owner.eventDispatcher.dispatchEvent(se);
+						}
+						break;
+					case "stationary":
+						isHovering = true;
+						break;
+				}
+			}
+			
+			if ( isOver && !isHovering )//roll out
+			{
+				isOver = false;
+				se = new StarlingTouchEvent(StarlingTouchEvent.HOVER_OUT, this );
 				owner.eventDispatcher.dispatchEvent(se);
 			}
 		}

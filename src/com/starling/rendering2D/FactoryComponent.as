@@ -42,7 +42,7 @@ package com.starling.rendering2D
 		}
 		
 		
-		private function onResourceComplete(e:Event = null):void 
+		protected function onResourceComplete(e:Event = null):void 
 		{
 			resource.removeEventListener(ResourceEvent.LOADED_EVENT, onResourceComplete );
 			
@@ -51,7 +51,7 @@ package com.starling.rendering2D
 		}
 		
 		
-		private function textureCompleteHandler(e:Event=null):void 
+		protected function textureCompleteHandler(e:Event=null):void 
 		{
 			if( resource != null )
 				resource.removeEventListener(ResourceEvent.LOADED_EVENT, textureCompleteHandler );

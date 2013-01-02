@@ -1,20 +1,20 @@
 package com.starling.rendering2D 
 {
-	import com.pblabs.engine.components.AnimatedComponent;
-	import com.pblabs.engine.debug.Logger;
-	import com.pblabs.engine.entity.EntityComponent;
-	import com.pblabs.engine.PBE;
-	import com.pblabs.engine.PBUtil;
-	import flash.geom.Point;
-	import flash.geom.Rectangle;
-	import starling.animation.IAnimatable;
-	import starling.core.Starling;
-	import starling.display.Sprite;
-	
-	
-	public class StarlingScene extends EntityComponent implements IAnimatable 
-	{
-		/**
+    import com.pblabs.engine.components.AnimatedComponent;
+    import com.pblabs.engine.debug.Logger;
+    import com.pblabs.engine.entity.EntityComponent;
+    import com.pblabs.engine.PBE;
+    import com.pblabs.engine.PBUtil;
+    import flash.geom.Point;
+    import flash.geom.Rectangle;
+    import starling.animation.IAnimatable;
+    import starling.core.Starling;
+    import starling.display.Sprite;
+    
+    
+    public class StarlingScene extends AnimatedComponent//extends EntityComponent implements IAnimatable 
+    {
+        /**
          * Minimum allowed zoom level.
          * 
          * @see zoom 
@@ -26,96 +26,142 @@ package com.starling.rendering2D
          * 
          * @see zoom 
          */
-        public var maxZoom:Number = 1;
+        public var maxZoom:Number = 10;
         
-		/**
+        /**
          * If set, every frame, trackObject's position is read and assigned
          * to the scene's position, so that the scene follows the trackObject.
          */
-		public var trackObject:DisplayObjectRenderer;
-		
-		/**
+        public var trackObject:DisplayObjectRenderer;
+        
+        /**
          * An x/y offset for adjusting the camera's focus around the tracked
          * object.
          * 
          * Only applies if trackObject is set.
          */
-		public var trackOffset:Point = new Point();
+        public var trackOffset:Point = new Point();
 		
 		/**
-		 * The rectangle to limit the tracking to, so the scene doesnt pan outside the bounds of the rect.
+		 * If true, the scene rotation will match the rotation of the trackObject
+		 * Does not currently work with trackLimitRectangle
 		 */
-		public var trackLimitRectangle:Rectangle;
+		public var trackToRotation:Boolean = false;
+        
+        /**
+         * The rectangle to limit the tracking to, so the scene doesnt pan outside the bounds of the rect.
+         */
+        public var trackLimitRectangle:Rectangle;
+        
+        protected var _zoom:Number = 1;
+        protected var _layers:Array = [];
+        protected var _sceneView:Sprite;
 		
-		protected var _zoom:Number = 1;
-		protected var _layers:Array = [];
-		protected var _sceneView:Sprite;
-		
-		public function get sceneView():Sprite
+		/**
+		 * A layer above the scene that stays relative to the screen
+		 */
+		protected var hudLayer:DisplayObjectSceneLayer;
+        
+        public function get sceneView():Sprite
         {
             if (!_sceneView )
-				_sceneView = Starling.current.stage.getChildAt(0) as Sprite;
+                _sceneView = Starling.current.stage.getChildAt(0) as Sprite;
             
             return _sceneView;
         }
-		
-		override protected function onAdd():void 
-		{
-			super.onAdd();
+        
+        override protected function onAdd():void 
+        {
+            super.onAdd();
 			
-			//if( trackObject != null )
-			Starling.juggler.add(this);
-		}
-		
-		public function advanceTime(time:Number):void
-		{
-			if(!sceneView)
+			hudLayer = new DisplayObjectSceneLayer();
+			Starling.current.stage.addChild(hudLayer);
+            
+            //if( trackObject != null )
+            //Starling.juggler.add(this);
+        }
+        
+        override public function onFrame(time:Number):void
+        {
+            if(!sceneView)
             {
                 Logger.warn(this, "updateTransform", "sceneView is null, so we aren't rendering."); 
                 return;
             }
-			
-			if ( trackObject && trackObject.displayObject != null )
+            
+			if ( trackToRotation )
 			{
-				trackObject.advanceTime(time); //amke sure the track object advances first, so the position does not stutter
+				//TODO - fix trackLimitRectangle
+				if ( trackObject && trackObject.displayObject != null)
+				{
+					trackObject.onFrame(time);
+					sceneView.pivotX = trackObject.position.x;
+					sceneView.pivotY = trackObject.position.y;
+					
+					if( trackToRotation )
+						sceneView.rotation = PBUtil.getRadiansFromDegrees(-trackObject.rotation);
 				
-				sceneView.x = -((trackObject.displayObject.x * zoom) + trackOffset.x );
-				sceneView.y = -((trackObject.displayObject.y * zoom) + trackOffset.y);
+					
+					sceneView.x = -trackOffset.x;
+					sceneView.y = -trackOffset.y;
+					
+					//sceneView.x = -((trackObject.displayObject.x * zoom) + trackOffset.x );
+					//sceneView.y = -((trackObject.displayObject.y * zoom) + trackOffset.y);
+					
 				
+					
+				}
+				 //zoom
+				if( !isNaN(zoom) )
+					sceneView.scaleX = sceneView.scaleY = zoom;
 			}
-			/* */
-			// Apply limit to camera movement.
-            if(trackLimitRectangle != null)
-            {
-                var centeredLimitBounds:Rectangle = new Rectangle( trackLimitRectangle.x     + (sceneView.stage.stageWidth * 0.5), trackLimitRectangle.y      + (sceneView.stage.stageHeight * 0.5) ,
-            	                                                  trackLimitRectangle.width * zoom - (sceneView.stage.stageWidth )      , trackLimitRectangle.height * zoom - (sceneView.stage.stageHeight ) );
-               
-				 sceneView.x = PBUtil.clamp(sceneView.x, -centeredLimitBounds.right, -centeredLimitBounds.left);
-				 sceneView.y = PBUtil.clamp(sceneView.y, -centeredLimitBounds.bottom, -centeredLimitBounds.top)
-            }
-			
-			 //zoom
-			sceneView.scaleX = sceneView.scaleY = zoom;
-		}
-		
-		
+			else
+			{
+				if ( trackObject && trackObject.displayObject != null )
+				{
+					trackObject.onFrame(time); //amke sure the track object advances first, so the position does not stutter
+					
+					sceneView.x = -((trackObject.displayObject.x * zoom) + trackOffset.x );
+					sceneView.y = -((trackObject.displayObject.y * zoom) + trackOffset.y);
+					
+				}
+				
+				// Apply limit to camera movement.
+				if(trackLimitRectangle != null)
+				{
+					var centeredLimitBounds:Rectangle = new Rectangle( trackLimitRectangle.x     + (sceneView.stage.stageWidth * 0.5), trackLimitRectangle.y      + (sceneView.stage.stageHeight * 0.5) ,
+																	  trackLimitRectangle.width * zoom - (sceneView.stage.stageWidth )      , trackLimitRectangle.height * zoom - (sceneView.stage.stageHeight ) );
+				   
+					 sceneView.x = PBUtil.clamp(sceneView.x, -centeredLimitBounds.right, -centeredLimitBounds.left);
+					 sceneView.y = PBUtil.clamp(sceneView.y, -centeredLimitBounds.bottom, -centeredLimitBounds.top)
+				}
+				
+				
+				
+				 //zoom
+				sceneView.scaleX = sceneView.scaleY = zoom;
+			   
+			}
+        }
+        
+        
         public function add(dor:DisplayObjectRenderer):void
         {
             // Add to the appropriate layer.
-            var layer:DisplayObjectSceneLayer = getLayer(dor.layerIndex, true);
+            var layer:DisplayObjectSceneLayer = dor.isHUD ? hudLayer : getLayer(dor.layerIndex, true);
             layer.add(dor);
         }
         
         public function remove(dor:DisplayObjectRenderer):void
         {
-            var layer:DisplayObjectSceneLayer = getLayer(dor.layerIndex, false);
+            var layer:DisplayObjectSceneLayer = dor.isHUD ? hudLayer : getLayer(dor.layerIndex, false);
             if(!layer)
                 return;
 
             layer.remove(dor);
         }
-		
-		public function get zoom():Number
+        
+        public function get zoom():Number
         {
             return _zoom;
         }
@@ -130,13 +176,13 @@ package com.starling.rendering2D
                 
             _zoom = value;
         }
-		
-		public function get layerCount():int
+        
+        public function get layerCount():int
         {
             return _layers.length;
         }
-		
-		public function getLayer(index:int, allocateIfAbsent:Boolean = false):DisplayObjectSceneLayer
+        
+        public function getLayer(index:int, allocateIfAbsent:Boolean = false):DisplayObjectSceneLayer
         {
             // Maybe it already exists.
             if(_layers[index])
@@ -161,8 +207,8 @@ package com.starling.rendering2D
             // Return new layer.
             return _layers[index];
         }
-		
-		 /**
+        
+         /**
          * Convenience funtion for subclasses to control what class of layer
          * they are using.
          */
@@ -183,18 +229,18 @@ package com.starling.rendering2D
             
             return outLayer;
         }
-		
-		
+        
+        
         public function transformWorldToScreen(inPos:Point):Point
         {
-			return sceneView.localToGlobal(inPos);
+            return sceneView.localToGlobal(inPos);
         }
         
         public function transformScreenToWorld(inPos:Point):Point
         {   
-			return sceneView.globalToLocal(inPos);
+            return sceneView.globalToLocal(inPos);
         }
-		
-	}
+        
+    }
 
 }

@@ -23,17 +23,17 @@ package com.pblabs.engine.core
    /**
     * @eventType com.pblabs.engine.core.LevelEvent.READY_EVENT
     */
-   [Event(name="READY_EVENT", type="com.pblabs.engine.core.LevelEvent")]
+   [Event(name="ready", type="com.pblabs.engine.core.LevelEvent")]
    
    /**
     * @eventType com.pblabs.engine.core.LevelEvent.LEVEL_LOADED_EVENT
     */
-   [Event(name="LEVEL_LOADED_EVENT", type="com.pblabs.engine.core.LevelEvent")]
+   [Event(name="levelLoaded", type="com.pblabs.engine.core.LevelEvent")]
    
    /**
     * @eventType com.pblabs.engine.core.LevelEvent.LEVEL_UNLOADED_EVENT
     */
-   [Event(name="LEVEL_UNLOADED_EVENT", type="com.pblabs.engine.core.LevelEvent")]
+   [Event(name="levelUnloaded", type="com.pblabs.engine.core.LevelEvent")]
    
    /**
     * The LevelManager allows level files and groups to be added to a specific level so they

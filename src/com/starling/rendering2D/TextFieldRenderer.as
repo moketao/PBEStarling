@@ -31,13 +31,13 @@ package com.starling.rendering2D
 			super.onAdd();
 		}
 		
-		override public function advanceTime(deltaTime:Number):void 
+		override public function onFrame(deltaTime:Number):void 
 		{
 			if ( textReference != null && owner.getProperty(textReference) as String != text)
 			{
 				addTextField(owner.getProperty(textReference) as String);
 			}
-			super.advanceTime(deltaTime);
+			super.onFrame(deltaTime);
 		}
 		
 		private function addTextField(_text:String):void

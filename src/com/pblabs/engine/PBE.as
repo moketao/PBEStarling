@@ -65,6 +65,7 @@ package com.pblabs.engine
         protected static var _resourceManager:ResourceManager = null;
         protected static var _templateManager:TemplateManager = null;
         protected static var _inputManager:InputManager = null;
+        protected static var _processManagerMenu:ProcessManager = null;
         protected static var _processManager:ProcessManager = null;
         protected static var _objectTypeManager:ObjectTypeManager = null;
         
@@ -195,6 +196,10 @@ package com.pblabs.engine
                 rg.initialize("RootGroup");                
             }
             
+			
+            if(!_processManagerMenu)
+                _processManagerMenu = new ProcessManager();
+				
             if(!_processManager)
                 _processManager = new ProcessManager();
             
@@ -464,6 +469,14 @@ package com.pblabs.engine
         public static function get processManager():ProcessManager
         {
             return _processManager;
+        }
+        /**
+         * Returns the ProcessManager instance for the menu. This is so a menu can be built using the same rendering components, and run while the game process is paused, or at the same time
+         * @return ProcessManager instance
+         */		
+        public static function get processManagerMenu():ProcessManager
+        {
+            return _processManagerMenu;
         }
         
         /**
