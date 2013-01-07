@@ -60,7 +60,12 @@ package com.starling.rendering2D
 		/**
 		 * A layer above the scene that stays relative to the screen
 		 */
-		protected var hudLayer:DisplayObjectSceneLayer;
+		protected var _hudLayer:DisplayObjectSceneLayer;
+		
+		public function get hudLayer():DisplayObjectSceneLayer
+		{
+			return _hudLayer;
+		}
         
         public function get sceneView():Sprite
         {
@@ -74,7 +79,7 @@ package com.starling.rendering2D
         {
             super.onAdd();
 			
-			hudLayer = new DisplayObjectSceneLayer();
+			_hudLayer = new DisplayObjectSceneLayer();
 			Starling.current.stage.addChild(hudLayer);
             
             //if( trackObject != null )
