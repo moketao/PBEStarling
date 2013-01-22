@@ -85,7 +85,7 @@ package com.pblabs.engine.core
        */
       public function getlevelFiles(index:int):Array
       {
-         return _levelDescriptions[index].Files;
+         return _levelDescriptions[index].files;
       }
       
       /**
@@ -93,7 +93,7 @@ package com.pblabs.engine.core
        */
       public function getlevelGroups(index:int):Array
       {
-         return _levelDescriptions[index].Groups;
+         return _levelDescriptions[index].groups;
       }
 	  
 	  /**

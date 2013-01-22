@@ -33,6 +33,11 @@ package com.starling.rendering2D
 			return _armature;
 		}
 		
+		public function set armature(value:Armature):void
+		{
+			_armature = value;
+		}
+		
 		override protected function onAdd():void 
 		{
 			super.onAdd();
@@ -75,7 +80,15 @@ package com.starling.rendering2D
 				armature.update();
 				
 				if ( displayObject != null && scene != null && scene.sceneView != null )
+				{
+					try {
 					scene.add( this );
+					}
+					catch (e:Error)
+					{
+						trace(e.message);
+					}
+				}
 					
 				owner.eventDispatcher.dispatchEvent(new Event(ArmatureRenderer.ARMATURE_READY ) );
 			}

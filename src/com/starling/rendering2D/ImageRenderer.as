@@ -48,12 +48,15 @@ package com.starling.rendering2D
 		
 		protected function onTextureComplete(e:Event=null):void
 		{
-			textureComponent.eventDispatcher.removeEventListener(Event.COMPLETE, onTextureComplete );
-			if ( textureComponent.texture != null )
+			if ( textureComponent )
 			{
-				image = new Image(textureComponent.texture);
-				if (scene != null && scene.sceneView != null )
-					scene.add( this );
+				textureComponent.eventDispatcher.removeEventListener(Event.COMPLETE, onTextureComplete );
+				if ( textureComponent.texture != null )
+				{
+					image = new Image(textureComponent.texture);
+					if (scene != null && scene.sceneView != null )
+						scene.add( this );
+				}
 			}
 		}
 		

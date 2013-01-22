@@ -30,7 +30,7 @@ package com.starling.rendering2D
 			if ( starlingMovieClip != null && scene != null )
 				scene.add( this );
 			else if ( textureAtlasComponent != null && textureAtlasComponent.isLoaded )
-				onTextureComplete();
+				onTextureAtlasComplete();
 			else if( textureAtlasComponent != null ) //texture isn't loaded
 				textureAtlasComponent.eventDispatcher.addEventListener(Event.COMPLETE, onTextureAtlasComplete );
 			
