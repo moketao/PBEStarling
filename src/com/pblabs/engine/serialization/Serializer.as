@@ -11,6 +11,8 @@ package com.pblabs.engine.serialization
     import com.pblabs.engine.debug.Logger;
     import com.pblabs.engine.entity.IEntity;
      import com.pblabs.engine.entity.IEntityComponent;
+	 import com.pblabs.engine.entity.PropertyReference;
+	 import com.pblabs.engine.PBE;
      import flash.geom.Point;
      import flash.utils.getQualifiedClassName;
     
@@ -105,6 +107,83 @@ package com.pblabs.engine.serialization
                     typeName = isSimpleType(object) ? "::DefaultSimple" : "::DefaultComplex";
                 
                 _serializers[typeName](object, xml);
+            }
+        }
+		
+        public function serializeTemplate(object:*, xml:XML, templateName:String):void
+        {
+			var templateXML:XML ;
+			if ( templateName && templateName != "" )
+				templateXML = PBE.templateManager.getXML(templateName, "template");
+			
+            if (object is IEntity)
+            {
+                _currentEntity = object as IEntity;
+				
+				var entityXML:XML = <entity name={object.name} template={templateName} />;
+				
+				var _components:Array = (object as IEntity).lookupComponentsByType(IEntityComponent);
+				for each (var component:IEntityComponent in _components)
+				{
+					var componentXML:XML = <component type={getQualifiedClassName(component).replace(/::/,".")} name={component.name} />;
+					serializeTemplateComponent(component, componentXML, templateXML.component.(@name == component.name));
+					entityXML.appendChild(componentXML);
+				}
+
+				xml.appendChild(entityXML);
+            }
+        }
+		
+		private function serializeTemplateComponent(object:*, xml:XML, templateComponentXMLList:XMLList):void
+        {
+			//trace(templateComponentXMLList.toXMLString());
+			
+        	if (object == null) return;
+			
+			if ( templateComponentXMLList == null || templateComponentXMLList.length == 0 || templateComponentXMLList[0] == undefined ) return; //was added dynamically
+        	
+            var classDescription:XML = TypeUtility.getTypeDescription(object);
+            for each(var property:XML in classDescription.child("accessor"))
+            {
+                if(property.@access == "readwrite")
+                {
+                    // Get property info
+                    var propertyName:String = property.@name;
+                    
+                    // Only serialize properties, that aren't null
+                    if(object[propertyName] != null)
+                    {
+                        var propertyXML:XML = serializeProperty(object, propertyName);
+						
+                        if(propertyXML != null)
+                        {
+							var tPropertyXML:XMLList = templateComponentXMLList[0][propertyName];
+							//check if the serialized value equals the value set by the template, if so, dont include it
+							if( tPropertyXML == null || tPropertyXML.toXMLString() != propertyXML.toXMLString() )
+								xml.appendChild(propertyXML);
+						
+                            
+                        }
+                    }
+                }
+            }
+            
+            for each(var field:XML in classDescription.child("variable"))
+            {
+                var fieldName:String = field.@name;
+
+                // Only serialize variables, that aren't null
+                if(object[fieldName] != null)
+                {
+                    var fieldXML:XML = serializeProperty(object, fieldName);
+                    if(fieldXML != null)
+                    {
+						var tFieldXML:XMLList = templateComponentXMLList[0][fieldName];
+						//check if the serialized value equals the value set by the template, if so, dont include it
+						if( tFieldXML == null || tFieldXML.toXMLString() != fieldXML.toXMLString() )
+							xml.appendChild(fieldXML);
+                    }                
+                }
             }
         }
         
@@ -425,6 +504,11 @@ package com.pblabs.engine.serialization
                 var defaultValue:XMLList = data ? data.arg.(@key == "defaultValue") : null;
                 if (defaultValue && object[propertyName].toString() == defaultValue.@value.toString())
                     return null;
+					
+				//check if this property has a PropertyReference assoicated with it
+				var propRef:PropertyReference = object.hasOwnProperty(propertyName + "Property") ? object[propertyName + "Property"] :  object.hasOwnProperty(propertyName + "Reference") ? object[propertyName + "Reference"] : null;
+				if ( propRef )
+					return null; //ignore this property if there is a property reference set for it
             }
             
             return propertyXML;
@@ -584,7 +668,7 @@ package com.pblabs.engine.serialization
                 return true;
             }
             // Write component reference
-            if (reference is IEntityComponent)
+            if (reference is IEntityComponent && (reference as IEntityComponent).owner )
             {
                 xml.@entityName = (reference as IEntityComponent).owner.name;
                 xml.@componentName = (reference as IEntityComponent).name;

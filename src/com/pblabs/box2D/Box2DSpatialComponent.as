@@ -54,17 +54,6 @@ package com.pblabs.box2D
             _manager = value;
         }
         
-        public function get manager():Box2DManagerComponent
-        {
-            Logger.warn(this, "get manager", "manager is deprecated; switch to spatialManager.");
-            return spatialManager;
-        }
-        
-        public function set manager(value:Box2DManagerComponent):void
-        {
-            spatialManager = value;
-            Logger.warn(this, "set manager", "manager is deprecated; switch to spatialManager.");
-        }
         
         /**
          * The Box2D b2Body wrapped by this component.
@@ -139,6 +128,7 @@ package com.pblabs.box2D
                 buildCollisionShapes();
         }
         
+		[EditorData(defaultValue="(x=0, y=0)")]
         public function get position():Point
         {
             if (_body)
@@ -165,7 +155,29 @@ package com.pblabs.box2D
 				_bodyDef.position.Multiply(_manager.inverseScale);
 			}
         }
+		
+		[EditorData(ignore="true")]
+		public function get x():Number
+		{
+			return position.x;
+		}
         
+		public function set x(value:Number):void
+		{
+			position = new Point(value, position.y);
+		}
+		[EditorData(ignore="true")]
+		public function get y():Number
+		{
+			return position.y;
+		}
+        
+		public function set y(value:Number):void
+		{
+			position = new Point(position.x, value);
+		}
+		
+		[EditorData(defaultValue="0")]
         public function get rotation():Number
         {
             var rotation:Number = _bodyDef.angle;
@@ -185,7 +197,7 @@ package com.pblabs.box2D
                 _body.SetPositionAndAngle(_body.GetPosition(), rotation);
         }
         
-        [EditorData(defaultValue="100|100")]
+        [EditorData(defaultValue="(x=100, y=100)")]
         public function get size():Point
         {
             return _size;
@@ -199,6 +211,7 @@ package com.pblabs.box2D
                 buildCollisionShapes();
         }
         
+		[EditorData(defaultValue="(x=0, y=0)")]
         public function get linearVelocity():Point
         {
             if (_body)
@@ -222,6 +235,7 @@ package com.pblabs.box2D
             }
         }
         
+		[EditorData(defaultValue="0")]
         public function get angularVelocity():Number
         {
             if (_body)
@@ -286,6 +300,7 @@ package com.pblabs.box2D
                 _body.SetSleepingAllowed(value);
         }
         
+		[EditorData(defaultValue="false")]
         public function get collidesContinuously():Boolean
         {
             if (_body)
@@ -301,6 +316,7 @@ package com.pblabs.box2D
                 _body.SetBullet(value);
         }
 		
+		[EditorData(defaultValue="0")]
 		public function get bodyType():uint {
 			if (_body)
 				return _body.GetType();

@@ -448,8 +448,12 @@ package com.pblabs.rendering2D
         
         public function get worldPosition():Point
         {
-            if(!scene)
-                throw new Error("Not attached to a scene, so cannot transform from world space.");
+            if (!scene)
+			{
+				trace("Not attached to a scene, so cannot transform from world space.");
+				return new Point();
+               // throw new Error("Not attached to a scene, so cannot transform from world space.");
+			}
 
             return scene.transformSceneToWorld(position);
         }

@@ -32,6 +32,7 @@ package com.pblabs.box2D
             _parent.buildCollisionShapes();
       }
       
+	  [EditorData(defaultValue="(x=0, y=0)")]
       public function get offset():Point
       {
          return _offset;

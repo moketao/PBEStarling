@@ -25,6 +25,7 @@ package com.starling.rendering2D
 		/**
 		 * If true, the display object renderer will be added to a Heads Up Display layer above the scene that is relative to the screen
 		 */
+		[EditorData(defaultValue="false")]
 		public var isHUD:Boolean = false;
 		
 		/**
@@ -43,6 +44,7 @@ package com.starling.rendering2D
 		 * 1 = fixed position
 		 * 1.1 to 1.5 = background, slow scrolling
 		 */
+		[EditorData(defaultValue="(x=1, y=1)")]
 		public var scrollFactor:Point = new Point(1, 1); 
 		
 		/**
@@ -70,6 +72,7 @@ package com.starling.rendering2D
          * if set this to false, positions will be handeled with numbers insteed of integers
          * makes slow movement smoother for example
          */
+		[EditorData(defaultValue="true")]
         public var snapToNearestPixels:Boolean = true;
 		
 		//Protected variables
@@ -89,8 +92,9 @@ package com.starling.rendering2D
 		protected var _positionOffset:Point = new Point();
 		protected var _registrationPoint:Point = new Point();
 		protected var _touchable:Boolean = false;
-		protected var _visible:Boolean = false;
+		protected var _visible:Boolean = true;
 		
+		[EditorData(ignore="true")]
 		public function get displayObject():DisplayObject
 		{
 			return _displayObject;
@@ -203,6 +207,7 @@ package com.starling.rendering2D
 		 * Indicates if this object (and its children) will receive starling touch events.
 		 * @default false
 		 */
+		[EditorData(defaultValue="false")]
 		public function get touchable():Boolean
 		{
 			return _touchable;
@@ -214,6 +219,7 @@ package com.starling.rendering2D
 			_transformDirty = true;
 		}
 		
+		[EditorData(defaultValue="0")]
         public function get layerIndex():int
         {
             return _layerIndex;
@@ -230,7 +236,7 @@ package com.starling.rendering2D
             _layerIndex = value;
             _layerIndexDirty = true;
         }
-        
+		[EditorData(defaultValue="0")]
         public function get zIndex():int
         {
             return _zIndex;
@@ -249,12 +255,12 @@ package com.starling.rendering2D
             _zIndex = value;
             _zIndexDirty = true;
         }
-		
+		 [EditorData(ignore="true")]
 		public function get scaleY():Number
 		{
 			return _scale.y;
 		}
-		
+		 [EditorData(ignore="true")]
 		public function get scaleX():Number
 		{
 			return _scale.x;
@@ -268,11 +274,13 @@ package com.starling.rendering2D
 			scale = new Point( scaleX, value );
 		}
 		//X / Y wrappers for position
+		 [EditorData(ignore="true")]
 		public function get y():Number
 		{
 			return _position.y;
 		}
 		
+		 [EditorData(ignore="true")]
 		public function get x():Number
 		{
 			return _position.x;
@@ -286,7 +294,7 @@ package com.starling.rendering2D
 			position = new Point( x, value );
 		}
 		
-		
+		[EditorData(defaultValue="(x=0, y=0)")]
         public function get position():Point
         {
             return _position.clone();
@@ -321,7 +329,7 @@ package com.starling.rendering2D
 			_transformDirty = true;
         }
 		
-		
+		[EditorData(defaultValue="(x=0, y=0)")]
         public function get registrationPoint():Point
         {
             return _registrationPoint.clone();
@@ -346,7 +354,7 @@ package com.starling.rendering2D
             _transformDirty = true;
         }
 		
-		
+		[EditorData(defaultValue="(x=1, y=1)")]
         public function get scale():Point
         {
             return _scale.clone();
@@ -369,6 +377,7 @@ package com.starling.rendering2D
 		/**
          * Rotation in degrees
          */
+		[EditorData(defaultValue="0")]
         public function get rotation():Number
         {
             return PBUtil.getDegreesFromRadians(_rotation);
@@ -387,6 +396,7 @@ package com.starling.rendering2D
             _transformDirty = true;
         }
 		
+		[EditorData(defaultValue="1")]
 		public function get alpha():Number
         {
             return _alpha;
@@ -405,7 +415,7 @@ package com.starling.rendering2D
         }
 		
 		
-		
+		[EditorData(defaultValue="(x=0, y=0)")]
 		public function get positionOffset():Point
 		{
 			return _positionOffset.clone();
@@ -427,6 +437,7 @@ package com.starling.rendering2D
 			_transformDirty = true;
 		}
 		
+		[EditorData(defaultValue="true")]
 		public function get visible():Boolean
 		{
 			return _visible;
@@ -449,6 +460,7 @@ package com.starling.rendering2D
          *
          * @return Number Offset Rotation angle in degrees
          */
+		[EditorData(defaultValue="0")]
         public function get rotationOffset():Number 
         {
             return PBUtil.getDegreesFromRadians(_rotationOffset);

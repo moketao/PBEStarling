@@ -357,6 +357,16 @@ package com.pblabs.engine.core
 			return _things[name];
 		}
 		
+		public function get things():Array
+		{
+			var result:Array = [];
+			for (var key:Object in _things) {
+				if( getXML(String(key),"template") ) //make sure it is a template
+					result.push(key);
+			}
+			return result;
+		}
+		
 		/**
 		 * Register a callback-powered entity with the TemplateManager. Instead of
 		 * parsing and returning an entity based on XML, this lets you directly

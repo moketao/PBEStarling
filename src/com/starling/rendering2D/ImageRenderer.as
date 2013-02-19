@@ -19,7 +19,6 @@ package com.starling.rendering2D
 	 */
 	public class ImageRenderer extends DisplayObjectRenderer 
 	{
-		
 		public var textureComponent:TextureComponent;
 		
 		
@@ -78,6 +77,7 @@ package com.starling.rendering2D
 			}
 		}
 		
+		[EditorData(ignore="true")]
 		public function get image():Image
 		{
 			return _image;
@@ -89,7 +89,7 @@ package com.starling.rendering2D
 			this.displayObject = image;
 		}
 		
-		
+		[EditorData(defaultValue="4294967295")]
 		public function get color():uint
 		{
 			return _color;

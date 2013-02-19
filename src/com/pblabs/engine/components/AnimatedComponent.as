@@ -26,6 +26,7 @@ package com.pblabs.engine.components
         [EditorData(ignore="true")]
         public var updatePriority:Number = 0.0;
 		
+		[EditorData(defaultValue="false")]
 		public var isMenuItem:Boolean = false;
         
         private var _registerForUpdates:Boolean = true;

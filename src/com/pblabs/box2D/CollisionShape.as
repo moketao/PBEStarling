@@ -28,7 +28,7 @@ package com.pblabs.box2D
          if (_parent)
             _parent.buildCollisionShapes();
       }
-      
+      [EditorData(defaultValue="0")]
       public function get friction():Number
       {
          return _friction;
@@ -41,7 +41,7 @@ package com.pblabs.box2D
          if (_parent)
             _parent.buildCollisionShapes();
       }
-      
+       [EditorData(defaultValue="0")]
       public function get restitution():Number
       {
          return _restitution;
@@ -54,7 +54,7 @@ package com.pblabs.box2D
          if (_parent)
             _parent.buildCollisionShapes();
       }
-      
+       [EditorData(defaultValue="false")]
       public function get isTrigger():Boolean
       {
          return _isTrigger;
