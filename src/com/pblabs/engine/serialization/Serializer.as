@@ -125,9 +125,11 @@ package com.pblabs.engine.serialization
 				var _components:Array = (object as IEntity).lookupComponentsByType(IEntityComponent);
 				for each (var component:IEntityComponent in _components)
 				{
-					var componentXML:XML = <component type={getQualifiedClassName(component).replace(/::/,".")} name={component.name} />;
+					var componentXML:XML = <component name={component.name} />;
+					var componentXMLDefault:XML = new XML(componentXML.toXMLString());
 					serializeTemplateComponent(component, componentXML, templateXML.component.(@name == component.name));
-					entityXML.appendChild(componentXML);
+					if ( componentXMLDefault.* != componentXML.* )
+						entityXML.appendChild(componentXML);
 				}
 
 				xml.appendChild(entityXML);
@@ -159,7 +161,9 @@ package com.pblabs.engine.serialization
                         {
 							var tPropertyXML:XMLList = templateComponentXMLList[0][propertyName];
 							//check if the serialized value equals the value set by the template, if so, dont include it
-							if( tPropertyXML == null || tPropertyXML.toXMLString() != propertyXML.toXMLString() )
+							//TODO - determine better way to see if XML objects are equal, since these methods compare strings and require order of variables to match
+							//if( tPropertyXML == null || tPropertyXML.toXMLString() != propertyXML.toXMLString() )
+							if( tPropertyXML == null || tPropertyXML.* != propertyXML.* )
 								xml.appendChild(propertyXML);
 						
                             

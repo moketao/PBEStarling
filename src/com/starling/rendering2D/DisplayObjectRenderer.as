@@ -148,6 +148,8 @@ package com.starling.rendering2D
 			
 			if ( displayObject )
 				displayObject.dispose();
+				
+			displayObject = null;
 		}
 		
 		protected function updateProperties():void
