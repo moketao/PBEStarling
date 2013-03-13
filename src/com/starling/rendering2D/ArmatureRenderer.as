@@ -28,6 +28,7 @@ package com.starling.rendering2D
 		
 		public var defaultAnimation:String;
 		
+		[EditorData(ignore="true")]
 		public function get armature():Armature
 		{
 			return _armature;
