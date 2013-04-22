@@ -1,8 +1,20 @@
 package dragonBones
 {
+	
+	/**
+	* Copyright 2012-2013. DragonBones. All Rights Reserved.
+	* @playerversion Flash 10.0, Flash 10
+	* @langversion 3.0
+	* @version 2.0
+	*/
+	
 	import dragonBones.animation.Animation;
+	import dragonBones.animation.IAnimatable;
+	import dragonBones.events.ArmatureEvent;
 	import dragonBones.utils.dragonBones_internal;
+	
 	import flash.events.EventDispatcher;
+	import flash.geom.ColorTransform;
 	
 	use namespace dragonBones_internal;
 	/**
@@ -13,68 +25,140 @@ package dragonBones
 	/**
 	 * Dispatched when the playback of a animation starts.
 	 */
-	[Event(name="animationStart", type="dragonBones.events.AnimationEvent")]
+	[Event(name="start", type="dragonBones.events.AnimationEvent")]
 	
 	/**
-	 * Dispatched when the playback of a movement stops.
+	 * Dispatched when the playback of a animation stops.
 	 */
-	[Event(name="movementComplete", type="dragonBones.events.AnimationEvent")]
+	[Event(name="complete", type="dragonBones.events.AnimationEvent")]
 	
 	/**
-	 * Dispatched when the playback of a movement completes a loop.
+	 * Dispatched when the playback of a animation completes a loop.
 	 */
-	[Event(name="movementLoopComplete", type="dragonBones.events.AnimationEvent")]
+	[Event(name="loopComplete", type="dragonBones.events.AnimationEvent")]
 	
 	/**
-	 * Dispatched when the animation of the armatrue enter a frame.
+	 * Dispatched when the animation of the armature enter a frame.
 	 */
 	[Event(name="movementFrameEvent", type="dragonBones.events.FrameEvent")]
 	
 	/**
-	 * Dispatched when a bone of the armatrue enter a frame.
+	 * Dispatched when a bone of the armature enters a frame.
 	 */
 	[Event(name="boneFrameEvent", type="dragonBones.events.FrameEvent")]
 	
 	/**
-	 * The core object of a skeleton animation system. It contains the root display object, the animation which can the change playback state and all sub-bones.
-	 *
+	 * A Armature instance is the core of the skeleton animation system. It contains the object to display, all sub-bones and the object animation(s).
+	 * @example
+	 * <p>Download the example files <a href='http://dragonbones.github.com/downloads/DragonBones_Tutorial_Assets.zip'>here</a>: </p>
+	 * <p>This example builds an Armature instance called "dragon" and stores it into the member varaible called 'armature'.</p>
+	 * <listing>	
+	 *	package  
+	 *	{
+	 *		import dragonBones.Armature;
+	 *		import dragonBones.factorys.BaseFactory;
+	 *  	import flash.display.Sprite;
+	 *		import flash.events.Event;	
+     *
+	 *		public class DragonAnimation extends Sprite 
+	 *		{		
+	 *			[Embed(source = "Dragon1.swf", mimeType = "application/octet-stream")]  
+	 *			private static const ResourcesData:Class;
+	 *			
+	 *			private var factory:BaseFactory;
+	 *			private var armature:Armature;		
+	 *			
+	 *			public function DragonAnimation() 
+	 *			{				
+	 *				factory = new BaseFactory();
+	 *				factory.addEventListener(Event.COMPLETE, handleParseData);
+	 *				factory.parseData(new ResourcesData(), 'Dragon');
+	 *			}
+	 *			
+	 *			private function handleParseData(e:Event):void 
+	 *			{			
+	 *				armature = factory.buildArmature('Dragon');
+	 *				addChild(armature.display as Sprite); 			
+	 *				armature.animation.play();
+	 *				addEventListener(Event.ENTER_FRAME, updateAnimation);			
+	 *			}
+	 *			
+	 *			private function updateAnimation(e:Event):void 
+	 *			{
+	 *				armature.advanceTime(stage.frameRate / 1000);
+	 *			}		
+	 *		}
+	 *	}
+	 * </listing>
 	 * @see dragonBones.Bone
 	 * @see dragonBones.animation.Animation
 	 */
-	public class Armature extends EventDispatcher
+	public class Armature extends EventDispatcher implements IAnimatable
 	{
 		/**
 		 * The name of the Armature.
 		 */
 		public var name:String;
+		
 		/**
-		 * An object that can contain any extra data.
+		 * An object containing user data.
 		 */
 		public var userData:Object;
-		/**
-		 * An object can change the playback state of the armature.
-		 */
-		public var animation:Animation;
 		
+		/** @private */
 		dragonBones_internal var _bonesIndexChanged:Boolean;
+		/** @private */
 		dragonBones_internal var _boneDepthList:Vector.<Bone>;
+		/** @private */
+		protected var _rootBoneList:Vector.<Bone>;
 		
-		private var _rootBoneList:Vector.<Bone>;
+		/** @private */
+		dragonBones_internal var _colorTransformChange:Boolean;
+		
+		/** @private */
+		protected var _colorTransform:ColorTransform;
+
+		
+		/** @private */
+		public function set colorTransform(value:ColorTransform):void
+		{
+			_colorTransform = value;
+			_colorTransformChange = true;
+		}
+		/**
+		 * The ColorTransform instance assiociated with this instance.
+		 * @param	The ColorTransform instance assiociated with this Armature instance.
+		 */
+		public function get colorTransform():ColorTransform
+		{
+			return _colorTransform;
+		}
 		
 		/** @private */
 		protected var _display:Object;
-		
 		/**
-		 * An display object which is dependent on specific display engine.
+		 * Instance type of this object varies from flash.display.DisplayObject to startling.display.DisplayObject and subclasses.
 		 */
-		public function get display():Object{
+		public function get display():Object
+		{
 			return _display;
 		}
 		
+		/** @private */
+		protected var _animation:Animation;
 		/**
-		 * Creates a new <code>Armature</code>
-		 *
-		 * @param	display	Represents the root display object for all sub-bones.
+		 * An Animation instance
+		 * @see dragonBones.animation.Animation
+		 */
+		public function get animation():Animation
+		{
+			return _animation;
+		}
+		
+
+		/**
+		 * Creates a Armature blank instance.
+		 * @param	Instance type of this object varies from flash.display.DisplayObject to startling.display.DisplayObject and subclasses.
 		 */
 		public function Armature(display:Object)
 		{
@@ -84,12 +168,12 @@ package dragonBones
 			_boneDepthList = new Vector.<Bone>;
 			_rootBoneList = new Vector.<Bone>;
 			
-			animation = new Animation(this);
+			_animation = new Animation(this);
 			_bonesIndexChanged = false;
 		}
 		
 		/**
-		 * Cleans up any resources used by the current object.
+		 * Cleans up resources used by this Armature instance.
 		 */
 		public function dispose():void
 		{
@@ -98,35 +182,28 @@ package dragonBones
 				bone.dispose();
 			}
 			
-			animation.dispose();
-			animation = null;
+			_boneDepthList.length = 0;
+			_rootBoneList.length = 0;
+			
+			_animation.dispose();
+			_animation = null;
+			
 			//_display = null;
 			
-			_boneDepthList = null;
-			_rootBoneList = null;
-		}
-		
-		/**
-		 * Updates the state of the armature. Should be called every frame manually.
-		 */
-		public function update():void
-		{
-			for each(var bone:Bone in _rootBoneList)
-			{
-				bone.update();
-			}
-			animation.update();
+			userData = null;
 			
-			if(_bonesIndexChanged)
+			if(_colorTransform)
 			{
-				updateBonesZ();
+				_colorTransform = null;
 			}
 		}
 		
+
 		/**
-		 * Gets a bone by name.
-		 * @param	name
-		 * @return
+		 * Retreives a Bone by name
+		 * @param	The name of the Bone to retreive.
+		 * @return A Bone instance or null if no Bone with that name exist.
+		 * @see dragonBones.Bone
 		 */
 		public function getBone(name:String):Bone
 		{
@@ -144,41 +221,64 @@ package dragonBones
 		}
 		
 		/**
-		 * Gets a bone by display.
-		 * @param	display
-		 * @return
+		 * Gets the Bone assiociated with this DisplayObject.
+		 * @param	Instance type of this object varies from flash.display.DisplayObject to startling.display.DisplayObject and subclasses.
+		 * @return A bone instance.
+		 * @see dragonBones.Bone
 		 */
 		public function getBoneByDisplay(display:Object):Bone
 		{
-			for each(var eachBone:Bone in _boneDepthList)
+			if(display)
 			{
-				if(eachBone.display == display)
+				for each(var bone:Bone in _boneDepthList)
 				{
-					return eachBone;
+					if(bone.display == display)
+					{
+						return bone;
+					}
 				}
 			}
 			return null;
 		}
 		
-		/** @private */
+		/**
+		 * Get all Bone instance assiociated with this armature.
+		 * @return A Vector.&lt;Bone&gt; instance.
+		 * @see dragonBones.Bone
+		 */
+		public function getBones():Vector.<Bone>
+		{
+			return _boneDepthList.concat();
+		}
+		/**
+		 * Add a Bone instance to this Armature instance.
+		 * @param	A Bone instance
+		 * @param	(optional) The parent's name of this Bone instance.
+		 * @see dragonBones.Bone
+		 */
 		public function addBone(bone:Bone, parentName:String = null):void
 		{
-			var boneParent:Bone = getBone(parentName);
-			if (boneParent)
+			if (bone)
 			{
-				boneParent.addChild(bone);
-			}
-			else
-			{
-				bone.removeFromParent();
-				addToBones(bone, true);
+				var boneParent:Bone = getBone(parentName);
+				if (boneParent)
+				{
+					boneParent.addChild(bone);
+				}
+				else
+				{
+					bone.removeFromParent();
+					addToBones(bone, true);
+				}
 			}
 		}
-		
-		/** @private */
-		public function removeBone(boneName:String):void
+		/**
+		 * Remove a Bone instance from this Armature instance.
+		 * @param	A Bone instance
+		 * @see dragonBones.Bone
+		 */
+		public function removeBone(bone:Bone):void
 		{
-			var bone:Bone = getBone(boneName);
 			if (bone)
 			{
 				if(bone.parent)
@@ -191,6 +291,74 @@ package dragonBones
 				}
 			}
 		}
+		/**
+		 * Remove a Bone instance from this Armature instance.
+		 * @param	The name of the Bone instance to remove.
+		 * @see dragonBones.Bone
+		 */
+		public function removeBoneByName(boneName:String):void
+		{
+			var bone:Bone = getBone(boneName);
+			removeBone(bone);
+		}
+		/**
+		 * Update the animation using this method typically in an ENTERFRAME Event or with a Timer.
+		 * @param	The amount of second to move the playhead ahead.
+		 */
+		public function advanceTime(passedTime:Number):void
+		{
+			for each(var bone:Bone in _boneDepthList)
+			{
+				if(bone._isOnStage)
+				{
+					var childArmature:Armature = bone.childArmature;
+					if(childArmature)
+					{
+						childArmature.advanceTime(passedTime);
+					}
+				}
+			}
+			animation.advanceTime(passedTime);
+			update();
+		}
+		
+		/**
+		 * Update the z-order of the display. 
+		 */
+		public function updateBonesZ():void
+		{
+			_boneDepthList.sort(sortBoneZIndex);
+			for each(var bone:Bone in _boneDepthList)
+			{
+				if(bone._isOnStage)
+				{
+					bone._displayBridge.addDisplay(_display);
+				}
+			}
+			_bonesIndexChanged = false;
+			
+			if(hasEventListener(ArmatureEvent.Z_ORDER_UPDATED))
+			{
+				dispatchEvent(new ArmatureEvent(ArmatureEvent.Z_ORDER_UPDATED));
+			}
+		}
+		
+		/** @private */
+		dragonBones_internal function update():void
+		{
+			for each(var bone:Bone in _rootBoneList)
+			{
+				bone.update();
+			}
+			
+			_colorTransformChange = false;
+			
+			if(_bonesIndexChanged)
+			{
+				updateBonesZ();
+			}
+		}
+		
 		/** @private */
 		dragonBones_internal function addToBones(bone:Bone, _root:Boolean = false):void
 		{
@@ -207,7 +375,8 @@ package dragonBones
 				{
 					_rootBoneList.push(bone);
 				}
-			}else if(boneIndex >= 0)
+			}
+			else if(boneIndex >= 0)
 			{
 				_rootBoneList.splice(boneIndex, 1);
 			}
@@ -218,6 +387,7 @@ package dragonBones
 			{
 				addToBones(child);
 			}
+			_bonesIndexChanged = true;
 		}
 		
 		/** @private */
@@ -241,22 +411,7 @@ package dragonBones
 			{
 				removeFromBones(child);
 			}
-		}
-		
-		/**
-		 * Sorts the display objects by z value.
-		 */
-		public function updateBonesZ():void
-		{
-			_boneDepthList.sort(sortBoneZIndex);
-			for each(var bone:Bone in _boneDepthList)
-			{
-				if(bone._displayVisible)
-				{
-					bone._displayBridge.addDisplay(_display);
-				}
-			}
-			_bonesIndexChanged = false;
+			_bonesIndexChanged = true;
 		}
 		
 		private function sortBoneZIndex(bone1:Bone, bone2:Bone):int

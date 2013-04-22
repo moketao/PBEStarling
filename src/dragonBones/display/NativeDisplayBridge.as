@@ -1,15 +1,29 @@
 package dragonBones.display
 {
+	/**
+	* Copyright 2012-2013. DragonBones. All Rights Reserved.
+	* @playerversion Flash 10.0
+	* @langversion 3.0
+	* @version 2.0
+	*/
+
+	
+	import dragonBones.objects.BoneTransform;
 	import flash.display.DisplayObject;
 	import flash.display.DisplayObjectContainer;
+	import flash.display.Shape;
+	import flash.geom.ColorTransform;
 	import flash.geom.Matrix;
 	
 	/**
-	 * A display bridge for tranditional DisplayList
+	 * The NativeDisplayBridge class is an implementation of the IDisplayBridge interface for traditional flash.display.DisplayObject.
 	 *
 	 */
 	public class NativeDisplayBridge implements IDisplayBridge
 	{
+		/**
+		 * @private
+		 */
 		protected var _display:DisplayObject;
 		
 		/**
@@ -19,16 +33,19 @@ package dragonBones.display
 		{
 			return _display;
 		}
-		
+		/**
+		 * @private
+		 */
 		public function set display(value:Object):void
 		{
-			if(_display == value){
+			if (_display == value)
+			{
 				return;
 			}
-			if(_display)
+			if (_display)
 			{
 				var parent:DisplayObjectContainer = _display.parent;
-				if(parent)
+				if (parent)
 				{
 					var index:int = _display.parent.getChildIndex(_display);
 				}
@@ -37,8 +54,9 @@ package dragonBones.display
 			_display = value as DisplayObject;
 			addDisplay(parent, index);
 		}
+		
 		/**
-		 * Creates a new <code>NativeDisplayBridge</code> object
+		 * Creates a new NativeDisplayBridge instance.
 		 */
 		public function NativeDisplayBridge()
 		{
@@ -47,27 +65,29 @@ package dragonBones.display
 		/**
 		 * @inheritDoc
 		 */
-		public function update(matrix:Matrix):void
+		public function update(matrix:Matrix, node:BoneTransform, colorTransform:ColorTransform, visible:Boolean):void
 		{
-			var pivotBitmap:PivotBitmap = _display as PivotBitmap;
-			if(pivotBitmap)
-			{
-				if (pivotBitmap.pivotX != 0 || pivotBitmap.pivotY != 0)
-				{
-					matrix.tx -= matrix.a * pivotBitmap.pivotX + matrix.c * pivotBitmap.pivotY;
-					matrix.ty -= matrix.b * pivotBitmap.pivotX + matrix.d * pivotBitmap.pivotY;
-				}
-			}
+			var pivotX:Number = node.pivotX;
+			var pivotY:Number = node.pivotY;
+			matrix.tx -= matrix.a * pivotX + matrix.c * pivotY;
+			matrix.ty -= matrix.b * pivotX + matrix.d * pivotY;
+			
 			_display.transform.matrix = matrix;
+			if (colorTransform)
+			{
+				_display.transform.colorTransform = colorTransform;
+			}
+			_display.visible = visible;
 		}
+		
 		/**
 		 * @inheritDoc
 		 */
 		public function addDisplay(container:Object, index:int = -1):void
 		{
-			if(container && _display)
+			if (container && _display)
 			{
-				if(index < 0)
+				if (index < 0)
 				{
 					container.addChild(_display);
 				}
@@ -77,12 +97,13 @@ package dragonBones.display
 				}
 			}
 		}
+		
 		/**
 		 * @inheritDoc
 		 */
 		public function removeDisplay():void
 		{
-			if(_display && _display.parent)
+			if (_display && _display.parent)
 			{
 				_display.parent.removeChild(_display);
 			}

@@ -1,108 +1,140 @@
-package dragonBones.objects {
-	
-	import flash.utils.ByteArray;
+package dragonBones.objects
+{
+	/**
+	* Copyright 2012-2013. DragonBones. All Rights Reserved.
+	* @playerversion Flash 10.0, Flash 10
+	* @langversion 3.0
+	* @version 2.0
+	*/
+	import dragonBones.utils.dragonBones_internal;
+	use namespace dragonBones_internal;
 	
 
+	
 	/**
-	 * A set of armature datas and animation datas
+	 * A SkeletonData instance holds all data related to an Armature instance. 
+	 * @example
+	 * <p>Download the example files <a href='http://dragonbones.github.com/downloads/DragonBones_Tutorial_Assets.zip'>here</a>: </p>
+	 * <p>This example parse the 'Dragon1.swf' data and stores its SkeletonData into the local variable named skeleton.</p>
+	 * <listing>	
+	 *	package  
+	 *	{
+	 *		import dragonBones.Armature;
+	 *		import dragonBones.factorys.BaseFactory;
+	 *  	import flash.display.Sprite;
+	 *		import flash.events.Event;	
+	 * 		import dragonBones.objects.SkeletonData;
+     *
+	 *		public class DragonAnimation extends Sprite 
+	 *		{		
+	 *			[Embed(source = "Dragon1.swf", mimeType = "application/octet-stream")]  
+	 *			private static const ResourcesData:Class;
+	 *			
+	 *			private var factory:BaseFactory;
+	 *			private var armature:Armature;		
+	 *			
+	 *			public function DragonAnimation() 
+	 *			{				
+	 *				factory = new BaseFactory();
+	 *				factory.addEventListener(Event.COMPLETE, handleParseData);
+	 *				var skeleton:SkeletonData = factory.parseData(new ResourcesData(), 'Dragon');
+	 *			}		
+	 *		}
+	 *	}
+	 * </listing>
+	 * @see dragonBones.Bone
+	 * @see dragonBones.animation.Animation
 	 */
 	public class SkeletonData
 	{
-		private var _armatureDatas:Object;
-		private var _animationDatas:Object;
-		private var _armatureList:Vector.<String>;
-		private var _animationList:Vector.<String>;
-		
-		internal var _name:String;
+		dragonBones_internal var _armatureDataList:DataList;
+		dragonBones_internal var _animationDataList:DataList;
+		dragonBones_internal var _displayDataList:DataList;
+		dragonBones_internal var _name:String;
+		/**
+		 * the name of this Skeletondata instance.
+		 */
 		public function get name():String
 		{
 			return _name;
 		}
 		
-		public function get totalArmatures():uint
+		dragonBones_internal var _frameRate:uint;
+		/**
+		 * The frameRate of this Skeltondata instance.
+		 */
+		public function get frameRate():uint
 		{
-			return _armatureList.length;
+			return _frameRate;
 		}
-		
-		public function get totalAnimation():uint
+		/**
+		 * All Armature instance names belonging to this Skeletondata instance.
+		 */
+		public function get armatureNames():Vector.<String>
 		{
-			return _animationList.length;
+			return _armatureDataList.dataNames.concat();
 		}
-		
-		public function get armatureList():Vector.<String>
+		/**
+		 * All Animation instance names belonging to this Skeletondata instance.
+		 */
+		public function get animationNames():Vector.<String>
 		{
-			return _armatureList.concat();
+			return _animationDataList.dataNames.concat();
 		}
-		
-		public function get animationList():Vector.<String>
-		{
-			return _animationList.concat();
-		}
-		
+		/**
+		 * Creates a new SkeletonData instance.
+		 */
 		public function SkeletonData()
 		{
-			_armatureDatas = { };
-			_animationDatas = { };
-			_armatureList = new Vector.<String>;
-			_animationList = new Vector.<String>;
+			_armatureDataList = new DataList();
+			_animationDataList = new DataList();
+			_displayDataList = new DataList();
 		}
-		
+		/**
+		 * Clean up all resources used by this SkeletonData instance.
+		 */
 		public function dispose():void
 		{
-			for each(var armatureData:ArmatureData in _armatureDatas)
+			for each (var armatureName:String in _armatureDataList.dataNames)
 			{
+				var armatureData:ArmatureData = _armatureDataList.getData(armatureName) as ArmatureData;
 				armatureData.dispose();
 			}
-			for each(var animationData:AnimationData in _animationDatas)
+			for each (var animationName:String in _animationDataList.dataNames)
 			{
+				var animationData:AnimationData = _animationDataList.getData(animationName) as AnimationData;
 				animationData.dispose();
 			}
-			_armatureDatas = null;
-			_animationDatas = null;
-			_armatureList = null;
-			_animationList = null;
+			_armatureDataList.dispose();
+			_animationDataList.dispose();
+			_displayDataList.dispose();
 		}
-		
+		/**
+		 * Get the ArmatureData instance with this name.
+		 * @param	name The name of the ArmatureData instance to retreive.
+		 * @return ArmatureData The ArmatureData instance by that name.
+		 */
 		public function getArmatureData(name:String):ArmatureData
 		{
-			return _armatureDatas[name];
+			return _armatureDataList.getData(name) as ArmatureData;
 		}
-		
-		public function getAramtureDataAt(index:int):ArmatureData
-		{
-			var name:String = _armatureList.length > index?_armatureList[index]:null;
-			return getArmatureData(name);
-		}
-		
+		/**
+		 * Get the AnimationData instance with this name.
+		 * @param	name The name of the AnimationData instance to retreive. 
+		 * @return AnimationData The AnimationData instance by that name.
+		 */
 		public function getAnimationData(name:String):AnimationData
 		{
-			return _animationDatas[name];
+			return _animationDataList.getData(name) as AnimationData;
 		}
-		
-		public function getAnimationDataAt(index:int):AnimationData
+		/**
+		 * Get the DisplayData instance with this name.
+		 * @param	name The name of the DisplayData instance to retreive. 
+		 * @return AnimationData The DisplayData instance by that name.
+		 */
+		public function getDisplayData(name:String):DisplayData
 		{
-			var name:String = _animationList.length > index?_animationList[index]:null;
-			return getAnimationData(name);
-		}
-		
-		internal function addArmatureData(data:ArmatureData):void
-		{
-			var name:String = data.name;
-			_armatureDatas[name] = data;
-			if(_armatureList.indexOf(name) < 0)
-			{
-				_armatureList.push(name);
-			}
-		}
-		
-		internal function addAnimationData(data:AnimationData):void
-		{
-			var name:String = data.name;
-			_animationDatas[name] = data;
-			if(_animationList.indexOf(name) < 0)
-			{
-				_animationList.push(name);
-			}
+			return _displayDataList.getData(name) as DisplayData;
 		}
 	}
 }

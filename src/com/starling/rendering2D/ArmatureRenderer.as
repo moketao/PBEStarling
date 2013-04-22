@@ -61,7 +61,7 @@ package com.starling.rendering2D
 				onFactoryReady();
 			
 			if ( armature != null )
-				armature.update(); 
+				armature.advanceTime(deltaTime); 
 		}
 		
 		protected function onFactoryReady(e:Event = null):void
@@ -78,7 +78,7 @@ package com.starling.rendering2D
 				if ( defaultAnimation != null )
 					armature.animation.gotoAndPlay(defaultAnimation, 0, 0);
 					
-				armature.update();
+				//armature.advanceTime();
 				
 				if ( displayObject != null && scene != null && scene.sceneView != null )
 				{
