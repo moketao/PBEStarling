@@ -11,8 +11,10 @@ package com.starling.rendering2D
 	import flash.geom.Point;
 	import flash.geom.Rectangle;
 	import starling.display.DisplayObject;
+	import starling.display.Image;
 	import starling.display.Sprite;
 	import flash.events.Event;
+	import starling.textures.TextureSmoothing;
 	
 	/**
 	 * ...
@@ -77,7 +79,9 @@ package com.starling.rendering2D
 				
 				if ( defaultAnimation != null )
 					armature.animation.gotoAndPlay(defaultAnimation, 0, 0);
-					
+				
+				smoothBones(armature, TextureSmoothing.TRILINEAR);
+				
 				//armature.advanceTime();
 				
 				if ( displayObject != null && scene != null && scene.sceneView != null )
@@ -92,6 +96,23 @@ package com.starling.rendering2D
 				}
 					
 				owner.eventDispatcher.dispatchEvent(new Event(ArmatureRenderer.ARMATURE_READY ) );
+			}
+		}
+		
+		protected function smoothBones(armature:Armature, smoothing:String = TextureSmoothing.TRILINEAR):void
+		{
+			var bones:Vector.<Bone> = armature.getBones();
+			for (var i:int = 0; i < bones.length; i++ )
+			{
+				var b:Bone = bones[i];
+				var img:Image;
+				if ( b.display is Image )
+					(b.display as Image).smoothing = smoothing;
+					
+				if ( b.childArmature )
+				{
+					smoothBones(b.childArmature, smoothing);
+				}
 			}
 		}
 		
