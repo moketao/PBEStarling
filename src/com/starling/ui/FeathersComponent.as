@@ -1,4 +1,4 @@
-package com.starling.rendering2D 
+package com.starling.ui 
 {
 	import com.starling.rendering2D.DisplayObjectRenderer;
 	import feathers.core.FeathersControl;
