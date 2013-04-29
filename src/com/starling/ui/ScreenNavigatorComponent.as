@@ -1,11 +1,13 @@
 package com.starling.ui 
 {
+	import com.pblabs.engine.entity.EntityComponent;
 	import com.pblabs.engine.serialization.TypeUtility;
 	import com.starling.rendering2D.DisplayObjectRenderer;
 	import feathers.controls.ScreenNavigator;
 	import feathers.controls.ScreenNavigatorItem;
 	import feathers.motion.transitions.ScreenSlidingStackTransitionManager;
 	import starling.animation.Transitions;
+	import starling.core.Starling;
 	
 	/**
 	 * ...
@@ -31,6 +33,8 @@ package com.starling.ui
 			this.displayObject = _screenNavigator;
 			super.onAdd();
 			
+			//Starling.current.stage.addChild(_screenNavigator);
+			
 			if (screens.length > 0 )
 			{
 				for ( var i:int = 0; i < screens.length; i++ )
@@ -49,6 +53,26 @@ package com.starling.ui
 			}
 			
 		}
+		/*
+		override protected function onReset():void 
+		{
+			super.onReset();
+		}
+		
+		override protected function onRemove():void 
+		{
+			super.onRemove();
+			
+			Starling.current.stage.removeChild(_screenNavigator);
+			if (screens.length > 0 )
+			{
+				for ( var i:int = 0; i < screens.length; i++ )
+				{
+					_screenNavigator.removeScreen(screens[i]);
+				}
+			}	
+		}
+		*/
 		
 	}
 

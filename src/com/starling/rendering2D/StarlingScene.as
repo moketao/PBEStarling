@@ -69,9 +69,6 @@ package com.starling.rendering2D
         
         public function get sceneView():Sprite
         {
-            if (!_sceneView )
-                _sceneView = Starling.current.stage.getChildAt(0) as Sprite;
-            
             return _sceneView;
         }
         
@@ -80,7 +77,11 @@ package com.starling.rendering2D
             super.onAdd();
 			
 			_hudLayer = new DisplayObjectSceneLayer();
-			Starling.current.stage.addChild(hudLayer);
+			
+			_sceneView = new Sprite();
+			
+			(Starling.current.stage.getChildAt(0) as Sprite).addChild(_sceneView);
+			(Starling.current.stage.getChildAt(0) as Sprite).addChild(hudLayer);
             
             //if( trackObject != null )
             //Starling.juggler.add(this);
