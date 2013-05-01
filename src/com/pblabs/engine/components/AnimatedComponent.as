@@ -25,9 +25,6 @@ package com.pblabs.engine.components
          */
         [EditorData(ignore="true")]
         public var updatePriority:Number = 0.0;
-		
-		[EditorData(defaultValue="false")]
-		public var isMenuItem:Boolean = false;
         
         private var _registerForUpdates:Boolean = true;
         private var _isRegisteredForUpdates:Boolean = false;
@@ -45,19 +42,13 @@ package com.pblabs.engine.components
             {
                 // Need to register.
                 _isRegisteredForUpdates = true;
-				if ( isMenuItem )
-					PBE.processManagerMenu.addAnimatedObject(this, updatePriority);
-				else
-					PBE.processManager.addAnimatedObject(this, updatePriority);
+				PBE.processManager.addAnimatedObject(this, updatePriority);
             }
             else if(!_registerForUpdates && _isRegisteredForUpdates)
             {
                 // Need to unregister.
                 _isRegisteredForUpdates = false;
-				if ( isMenuItem )
-					PBE.processManagerMenu.removeAnimatedObject(this);
-				else
-					PBE.processManager.removeAnimatedObject(this);
+				PBE.processManager.removeAnimatedObject(this);
             }
         }
         
