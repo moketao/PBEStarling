@@ -131,8 +131,6 @@ package com.starling.rendering2D
 		{
 			super.onAdd();
 			
-			//Starling.juggler.add(this); //add to the starling juggler, calling advanceTime every frame
-			
 			if ( displayObject != null && scene != null && scene.sceneView != null )
 				scene.add( this );
 		}
@@ -140,8 +138,6 @@ package com.starling.rendering2D
 		override protected function onRemove():void 
 		{
 			super.onRemove();
-			
-			//Starling.juggler.remove(this);
 			
 			if ( displayObject != null && scene != null && scene.sceneView != null )
 				scene.remove( this ); 
