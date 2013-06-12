@@ -14,6 +14,7 @@ package com.pblabs.sound
     import com.pblabs.engine.debug.Profiler;
     import com.pblabs.engine.resource.MP3Resource;
     import com.pblabs.engine.resource.SoundResource;
+	import flash.geom.Point;
     
     import flash.events.IOErrorEvent;
     import flash.media.Sound;
@@ -31,7 +32,7 @@ package com.pblabs.sound
         public static const MUSIC_MIXER_CATEGORY:String = "music";
         public static const SFX_MIXER_CATEGORY:String = "sfx";
         
-        public var maxConcurrentSounds:int = 5;
+        public var maxConcurrentSounds:int = 15;
 
         protected var playingSounds:Array = [];
         protected var categories:Object = {};
@@ -106,6 +107,104 @@ package com.pblabs.sound
             Profiler.exit("SoundManager.play");
             return sh;
         }
+		
+		/**
+		 * Play a sound in space.  The volume and pan is adjusted based on the distance away from the ear.
+		 * @param	sound
+		 * @param	earPosition
+		 * @param	soundPosition
+		 * @param	soundDistance
+		 * @param	category
+		 * @param	pan
+		 * @param	loopCount
+		 * @param	startDelay
+		 * @param	resourceType
+		 * @return
+		 */
+		public function playSpatial( sound:*, earPosition:Point, soundPosition:Point, soundDistance:Number=5000, category:String = "sfx", pan:Number = 0.0, loopCount:int = 0, startDelay:Number = 0.0, resourceType:Class = null ):SoundHandle 
+		{			
+			
+			Profiler.enter("SoundManager.playSpatial");
+			 
+			if ( earPosition == null || soundPosition == null )
+			{
+				Profiler.exit("SoundManager.playSpatial");
+				return null;
+			}
+				
+				
+			var distanceFromEar:Number = soundPosition.subtract( earPosition).length;
+			
+			
+            // exit if the sound is too far away, or there are too many sounds currently playing
+            if(distanceFromEar > soundDistance || playingSounds.length > maxConcurrentSounds)
+            {
+                Profiler.exit("SoundManager.playSpatial");
+                return null;
+            }
+			
+            
+            
+            // Infer type of sound, and get the Sound object.
+            var actualSound:Sound = null;
+            if(sound is Sound)
+                actualSound = sound as Sound;
+            else if(sound is SoundResource)
+                actualSound = (sound as SoundResource).soundObject;
+            else if(sound is String)
+            {
+                // Check if it is a known loaded sound, if so, then get the resource
+                // and play that.
+                if(cachedSounds[sound])
+                    actualSound = (cachedSounds[sound] as SoundResource).soundObject;
+                else
+                {
+                    // Make sure we have a ResourceType
+                    if (!resourceType)
+                        resourceType = MP3Resource;
+                    
+                    // Otherwise queue the resource and play it when it is loaded.
+                    PBE.resourceManager.load(sound, resourceType, function(r:*):void
+                    {
+                        cachedSounds[sound] = r;
+                        //play(r as SoundResource, category, pan, loopCount, startDelay);
+						playSpatial(r as SoundResource, earPosition, soundPosition, soundDistance, category, pan, loopCount, startDelay );
+                    });
+                    
+                    Profiler.exit("SoundManager.playSpatial");
+                    return null;
+                }
+                
+            }
+            else
+            {
+                throw new Error("Parameter sound is of unexpected type. Should be Sound, SoundResource, or String.");
+            }
+            
+            // Great, so set up the SoundHandle, start it, and return it.
+            var sh:SoundHandle = new SoundHandle(this, actualSound, category, pan, loopCount, startDelay);    
+			
+			var dratio:Number = Math.min( distanceFromEar / soundDistance, 1 ); //0 is right at ear, 1 is at or past max hearing distance
+			//trace("distanceFromEar", distanceFromEar, " dratio", dratio, "soundPosition", soundPosition , "earPosition", earPosition);
+			
+			sh.volume = 1 - dratio;
+			sh.pan = ( soundPosition.x >  earPosition.x) ? dratio + 0.25 : - dratio - 0.25;
+			
+		
+
+            // Look up its category.
+            var categoryRef:SoundCategory = categories[category] as SoundCategory;
+            
+            // Apply the category's transform to avoid transitory sound issues.
+            if(categoryRef)
+                sh.transform = SoundCategory.applyCategoriesToTransform(categoryRef.muted, sh.pan, sh.volume, categoryRef);            
+
+            // Add to the list of playing sounds.
+            playingSounds.push(sh);
+            
+            Profiler.exit("SoundManager.playSpatial");
+            return sh;
+		}
 
         public function stream(url:String, category:String = "sfx", pan:Number = 0.0, loopCount:int = 1, startDelay:Number = 0.0):SoundHandle
         {

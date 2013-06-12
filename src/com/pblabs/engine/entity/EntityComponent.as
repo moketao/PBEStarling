@@ -27,7 +27,7 @@ package com.pblabs.engine.entity
       {
          return _owner;
       }
-      
+      [EditorData(ignore="true")]
       public function set owner(value:IEntity):void
       {
           _owner = value;

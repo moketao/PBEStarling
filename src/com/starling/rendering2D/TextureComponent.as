@@ -11,7 +11,10 @@ package com.starling.rendering2D
 	{
 		private var _image:ImageResource;
 		
+		[EditorData(ignore="true")]
 		public var texture:Texture;
+		
+		[EditorData(ignore="true")]
 		public var eventDispatcher:EventDispatcher = new EventDispatcher();
 		
 		public function get isLoaded():Boolean

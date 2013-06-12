@@ -8,6 +8,7 @@
  ******************************************************************************/
 package com.pblabs.sound
 {
+	import flash.geom.Point;
     import flash.media.SoundTransform;
 
     /**
@@ -33,6 +34,22 @@ package com.pblabs.sound
          */
         function play(sound:*, category:String = "sfx", pan:Number = 0.0, loopCount:int = 1, startDelay:Number = 0.0, resourceType:Class=null):SoundHandle;
 
+		
+		/**
+		 * Play a sound in space.  The volume and pan is adjusted based on the distance away from the ear.
+		 * @param	sound
+		 * @param	earPosition
+		 * @param	soundPosition
+		 * @param	soundDistance
+		 * @param	category
+		 * @param	pan
+		 * @param	loopCount
+		 * @param	startDelay
+		 * @param	resourceType
+		 * @return
+		 */
+		function playSpatial(sound:*, earPosition:Point, soundPosition:Point, soundDistance:Number = 5000, category:String = "sfx", pan:Number = 0.0, loopCount:int = 1, startDelay:Number = 0.0, resourceType:Class = null):SoundHandle;
+		
         /**
          * Stream an MP3 or other Flash-compatible file from a URL. This is useful
          * for background music. Playback begins as soon as possible, before the

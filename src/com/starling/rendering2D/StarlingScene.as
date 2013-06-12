@@ -77,10 +77,10 @@ package com.starling.rendering2D
             super.onAdd();
 			
 			_hudLayer = new DisplayObjectSceneLayer();
-			
 			_sceneView = new Sprite();
 			
-			(Starling.current.stage.getChildAt(0) as Sprite).addChild(_sceneView);
+			//(Starling.current.stage.getChildAt(0) as Sprite).addChild(_sceneView);
+			Starling.current.stage.addChild(_sceneView);
 			Starling.current.stage.addChild(hudLayer);
             
             //if( trackObject != null )

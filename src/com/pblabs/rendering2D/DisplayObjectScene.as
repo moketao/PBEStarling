@@ -468,15 +468,15 @@ package com.pblabs.rendering2D
             // Update our state based on the tracked object, if any.
             if(trackObject)
             {
-                position = new Point(-(trackObject.position.x + trackOffset.x), 
-                                     -(trackObject.position.y + trackOffset.y));
+                position = new Point(-((trackObject.position.x  * zoom) + trackOffset.x), 
+                                     -((trackObject.position.y  * zoom) + trackOffset.y));
             }
-            
+			
             // Apply limit to camera movement.
             if(trackLimitRectangle != null)
             {
             	var centeredLimitBounds:Rectangle = new Rectangle( trackLimitRectangle.x     + sceneView.width * 0.5, trackLimitRectangle.y      + sceneView.height * 0.5,
-            	                                                   trackLimitRectangle.width - sceneView.width      , trackLimitRectangle.height - sceneView.height );
+            	                                                   trackLimitRectangle.width * zoom  - sceneView.width      , trackLimitRectangle.height * zoom - sceneView.height );
                 
                 position = new Point(PBUtil.clamp(position.x, -centeredLimitBounds.right, -centeredLimitBounds.left ), 
                                      PBUtil.clamp(position.y, -centeredLimitBounds.bottom, -centeredLimitBounds.top) );

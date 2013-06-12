@@ -78,7 +78,7 @@ package com.starling.rendering2D
 				this.updateTransform(true);
 				
 				if ( defaultAnimation != null )
-					armature.animation.gotoAndPlay(defaultAnimation, 0, 0);
+					armature.animation.gotoAndPlay(defaultAnimation);// , 0, 0);
 				
 				smoothBones(armature, TextureSmoothing.TRILINEAR);
 				
