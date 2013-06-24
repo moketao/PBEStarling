@@ -83,6 +83,7 @@ package com.starling.rendering2D
             if(idx != -1)
                 throw new Error("Already added!");
             
+			dor.displayObject.name = dor.owner.name + "::" + dor.name; //match the names, useful for hitTest to get the Renderer component of a DisplayObject
             rendererList.push(dor);
             addChild(dor.displayObject);
             markDirty();
