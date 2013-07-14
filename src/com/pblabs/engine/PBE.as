@@ -21,6 +21,7 @@ package com.pblabs.engine
     import com.pblabs.screens.ScreenManager;
     import com.pblabs.sound.ISoundManager;
     import com.pblabs.sound.SoundManager;
+	import starling.animation.Juggler;
     
     import flash.display.DisplayObject;
     import flash.display.DisplayObjectContainer;
@@ -51,6 +52,7 @@ package com.pblabs.engine
          */
         public static var IS_SHIPPING_BUILD:Boolean = false;
         
+        private static var _juggler:Juggler = null;	
         private static var _main:Sprite = null;	
         private static var _versionDetails:VersionDetails;
         
@@ -141,7 +143,7 @@ package com.pblabs.engine
         /**
          * Start the engine by giving it a reference to the root of the display hierarchy.
          */
-        public static function startup(mainClass:Sprite):void
+        public static function startup(mainClass:Sprite, juggler:Juggler=null):void
         {
             if(_started)
                 throw new Error("You can only call PBE.startup once.");
@@ -152,6 +154,7 @@ package com.pblabs.engine
             if (!mainClass.stage)
                 throw new Error("Your mainClass must be added to the stage before you can call startup. If you're using MX make sure you call this from the applicationComplete event, not the creationComplete event");
             
+            _juggler = juggler;
             _main = mainClass;
             _versionDetails = VersionUtil.checkVersion(mainClass);
             
@@ -195,8 +198,11 @@ package com.pblabs.engine
                 rg.initialize("RootGroup");                
             }
 				
-            if(!_processManager)
+            if (!_processManager)
+			{
                 _processManager = new ProcessManager();
+				_processManager.juggler = _juggler;
+			}
             
             if(!_objectTypeManager)
                 _objectTypeManager = new ObjectTypeManager();

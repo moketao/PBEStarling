@@ -15,6 +15,7 @@ package com.pblabs.engine.core
     import flash.events.Event;
     import flash.utils.getTimer;
 	import starling.animation.IAnimatable;
+	import starling.animation.Juggler;
 	import starling.core.Starling;
     
     
@@ -133,7 +134,20 @@ package com.pblabs.engine.core
         {
             return _platformTime;
         }
-        
+		
+		/**
+		 * Defaults to Starling.juggler, but can be overridden after PBE.startup is called
+		 */
+		public function get juggler():Juggler
+		{
+			return _juggler == null ? Starling.juggler : _juggler;
+		}
+		
+		public function set juggler(value:Juggler):void
+		{
+			_juggler = value;
+		}
+		
         /**
          * Starts the process manager. This is automatically called when the first object
          * is added to the process manager. If the manager is stopped manually, then this
@@ -146,10 +160,16 @@ package com.pblabs.engine.core
                 Logger.warn(this, "start", "The ProcessManager is already started.");
                 return;
             }
+			
+			if ( !juggler)
+			{
+				 Logger.warn(this, "start", "Must set the juggler of the process manager prior to calling Processmanager.start()");
+                return;
+			}
             
             lastTime = -1.0;
             elapsed = 0.0;
-			Starling.juggler.add(this);
+			this.juggler.add(this);
             started = true;
         }
 		 
@@ -167,7 +187,7 @@ package com.pblabs.engine.core
             }
             
             started = false;
-			Starling.juggler.remove(this);
+			this.juggler.remove(this);
         }
         
         /**
@@ -615,6 +635,8 @@ package com.pblabs.engine.core
         protected var duringAdvance:Boolean = false;
         
         protected var thinkHeap:SimplePriorityQueue = new SimplePriorityQueue(1024);
+		
+		protected var _juggler:Juggler;
     }
 }
 
