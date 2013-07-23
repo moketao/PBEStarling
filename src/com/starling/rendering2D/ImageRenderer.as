@@ -29,9 +29,7 @@ package com.starling.rendering2D
 		{
 			super.onAdd();
 			
-			if ( image != null && scene != null )
-				scene.add( this );
-			else if ( textureComponent != null && textureComponent.isLoaded ) 
+			if ( image == null && textureComponent != null && textureComponent.isLoaded ) 
 				onTextureComplete();
 			else if( textureComponent != null )//texture isn't loaded
 				textureComponent.eventDispatcher.addEventListener(Event.COMPLETE, onTextureComplete );

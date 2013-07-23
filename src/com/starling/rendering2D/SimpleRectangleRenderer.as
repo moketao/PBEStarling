@@ -9,11 +9,11 @@ package com.starling.rendering2D
 	/**
 	 * Simple Circle renderer for testing purposes.
 	 */
-	public class SimpleRectangleRenderer extends DisplayObjectRenderer 
+	public class SimpleRectangleRenderer extends ImageRenderer 
 	{
 		private var drawSprite:Sprite = new Sprite();
 		
-		public var color:uint = 0xff0000;
+		//public var color:uint = 0xff0000;
 		public var fillAlpha:Number = 1.0;
 		public var width:int = 50;
 		public var height:int = 50;
@@ -30,11 +30,10 @@ package com.starling.rendering2D
 			m.translate(lineThickness, lineThickness);
 			bd.draw( drawSprite, m );
 			var bitmap:Bitmap = new Bitmap(bd);
-			var image:Image = Image.fromBitmap(bitmap);
-			
-			this.displayObject = image;
+			this.image = Image.fromBitmap(bitmap);
 			
 			super.onAdd();
+			
 		}
 		
 	}
