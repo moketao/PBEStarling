@@ -11,6 +11,7 @@ package com.recast
 	import org.recastnavigation.CModule;
 	import org.recastnavigation.dtCrowd;
 	import org.recastnavigation.dtCrowdAgent;
+	import org.recastnavigation.dtCrowdAgentDebugInfo;
 	import org.recastnavigation.dtCrowdAgentParams;
 	import org.recastnavigation.dtNavMeshQuery;
 	import org.recastnavigation.dtObstacleAvoidanceParams;
@@ -67,7 +68,7 @@ package com.recast
 		public function addAgent(x:Number, y:Number, z:Number, paramsSwigCPtr:int):uint
 		{
 			
-			var posPtr:int = CModule.alloca(12);
+			var posPtr:int = CModule.malloc(12);
 			CModule.writeFloat(posPtr, x / scale);
 			CModule.writeFloat(posPtr + 4, y / scale);
 			CModule.writeFloat(posPtr + 8, z / scale);
@@ -77,13 +78,21 @@ package com.recast
 			var navquery:dtNavMeshQuery  = new dtNavMeshQuery();
 			navquery.swigCPtr =  sample.getNavMeshQuery();
 
-			var targetRef:int;
-			var targetPos:int;
+			var targetRef:int = CModule.malloc(4);
+			var targetPos:int = CModule.malloc(12);
+			
+			_numOfAgents ++;
+			//trace("num of agents: ", _numOfAgents);
 			
 			var statusPtr:int = navquery.findNearestPoly(posPtr, crowd.getQueryExtents(), crowd.getFilter(), targetRef, targetPos);
 			
+			CModule.free(posPtr);
+			CModule.free(targetRef);
+			CModule.free(targetPos);
 			return idx;
 		}
+		
+		private var _numOfAgents:int = 0;
 		
 		/** 
 		 * removes an agent to the Detour Crowd.
@@ -93,6 +102,9 @@ package com.recast
 		{
 			//Profiler.enter("removeAgent");
 			crowd.removeAgent(idx);
+			_numOfAgents--;
+			
+			trace("num of agents: ", _numOfAgents);
 			//Profiler.exit("removeAgent");
 		}
 		
@@ -128,7 +140,7 @@ package com.recast
 		 */
 		public function moveAgent(idx:uint, x:Number, y:Number, z:Number):void
 		{
-			var posPtr:int = CModule.alloca(12);
+			var posPtr:int = CModule.malloc(12);
 			CModule.writeFloat(posPtr, x / scale);
 			CModule.writeFloat(posPtr + 4, y / scale);
 			CModule.writeFloat(posPtr + 8, z / scale);
@@ -136,13 +148,17 @@ package com.recast
 			var navquery:dtNavMeshQuery  = new dtNavMeshQuery();
 			navquery.swigCPtr =  sample.getNavMeshQuery();
 			
-			var targetRef:int = CModule.alloca(4);
-			var targetPos:int = CModule.alloca(12);
+			var targetRef:int = CModule.malloc(4);
+			var targetPos:int = CModule.malloc(12);
 			
 			var status:int = navquery.findNearestPoly(posPtr, crowd.getQueryExtents(), crowd.getFilter(), targetRef, targetPos);
 		
 			if ( targetRef > 0)
-				crowd.requestMoveTarget(idx,targetRef, targetPos);
+				crowd.requestMoveTarget(idx, targetRef, targetPos);
+				
+			CModule.free(posPtr);
+			CModule.free(targetRef);
+			CModule.free(targetPos);
 		}
 		
 		public function setObstacleAvoidanceParams( idx:uint, 	velBias:Number = 0.4, 
@@ -192,12 +208,16 @@ package com.recast
 			if ( !sample )
 				return 0;
 			
-			var posPtr:int = CModule.alloca(12);
+			var posPtr:int = CModule.malloc(12);
 			CModule.writeFloat(posPtr, x / scale);
 			CModule.writeFloat(posPtr + 4, y / scale);
 			CModule.writeFloat(posPtr + 8, z / scale);
 			_dirtyTiles = true; //make sure tiles get rebuilt
-			return sample.addTempObstacle(posPtr, radius / scale, height / scale);
+			var oid:uint = sample.addTempObstacle(posPtr, radius / scale, height / scale);
+			
+			CModule.free(posPtr);
+			
+			return oid;
 		}
 		
 		/**
@@ -346,10 +366,15 @@ package com.recast
 			//	recast.update(deltaTime);
 			//Profiler.exit("recastOnTick");
 			
-			if( crowd )
-				crowd.update(deltaTime, crowdDebugPtr);
-			if ( _sample && _dirtyTiles)	
-				_sample.handleUpdate(deltaTime);
+			try{
+				if( crowd )
+					crowd.update(deltaTime, crowdDebugPtr);
+				if ( _sample && _dirtyTiles)	
+					_sample.handleUpdate(deltaTime);
+			}
+			catch (error:Error) {
+				trace("RecastManager::onTick", error.message);
+			}
 		}
 		
 		
