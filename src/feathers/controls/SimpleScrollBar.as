@@ -52,6 +52,18 @@ package feathers.controls
 	 * to indicate the scroll position. For a more feature-rich scroll bar,
 	 * see the <code>ScrollBar</code> component.
 	 *
+	 * <p>The following example updates a list to use simple scroll bars:</p>
+	 *
+	 * <listing version="3.0">
+	 * list.horizontalScrollBarFactory = function():IScrollBar
+	 * {
+	 *     return new SimpleScrollBar();
+	 * };
+	 * list.verticalScrollBarFactory = function():IScrollBar
+	 * {
+	 *     return new SimpleScrollBar();
+	 * };</listing>
+	 *
 	 * @see http://wiki.starling-framework.org/feathers/simple-scroll-bar
 	 * @see ScrollBar
 	 */
@@ -68,19 +80,38 @@ package feathers.controls
 		private static const HELPER_TOUCHES_VECTOR:Vector.<Touch> = new <Touch>[];
 
 		/**
+		 * @private
+		 */
+		protected static const INVALIDATION_FLAG_THUMB_FACTORY:String = "thumbFactory";
+
+		/**
 		 * The scroll bar's thumb may be dragged horizontally (on the x-axis).
+		 *
+		 * @see #direction
 		 */
 		public static const DIRECTION_HORIZONTAL:String = "horizontal";
 
 		/**
 		 * The scroll bar's thumb may be dragged vertically (on the y-axis).
+		 *
+		 * @see #direction
 		 */
 		public static const DIRECTION_VERTICAL:String = "vertical";
 
 		/**
 		 * The default value added to the <code>nameList</code> of the thumb.
+		 *
+		 * @see feathers.core.IFeathersControl#nameList
 		 */
 		public static const DEFAULT_CHILD_NAME_THUMB:String = "feathers-simple-scroll-bar-thumb";
+
+		/**
+		 * @private
+		 */
+		protected static function defaultThumbFactory():Button
+		{
+			return new Button();
+		}
 
 		/**
 		 * Constructor.
@@ -91,7 +122,16 @@ package feathers.controls
 		}
 
 		/**
-		 * The value added to the <code>nameList</code> of the thumb.
+		 * The value added to the <code>nameList</code> of the thumb. This
+		 * variable is <code>protected</code> so that sub-classes can customize
+		 * the thumb name in their constructors instead of using the default
+		 * name defined by <code>DEFAULT_CHILD_NAME_THUMB</code>.
+		 *
+		 * <p>To customize the thumb name without subclassing, see
+		 * <code>customThumbName</code>.</p>
+		 *
+		 * @see #customThumbName
+		 * @see feathers.core.IFeathersControl#nameList
 		 */
 		protected var thumbName:String = DEFAULT_CHILD_NAME_THUMB;
 
@@ -125,6 +165,16 @@ package feathers.controls
 		 * Determines if the scroll bar's thumb can be dragged horizontally or
 		 * vertically. When this value changes, the scroll bar's width and
 		 * height values do not change automatically.
+		 *
+		 * <p>In the following example, the direction is changed to vertical:</p>
+		 *
+		 * <listing version="3.0">
+		 * scrollBar.direction = SimpleScrollBar.DIRECTION_VERTICAL;</listing>
+		 *
+		 * @default SimpleScrollBar.DIRECTION_HORIZONTAL
+		 *
+		 * @see #DIRECTION_HORIZONTAL
+		 * @see #DIRECTION_VERTICAL
 		 */
 		public function get direction():String
 		{
@@ -142,12 +192,20 @@ package feathers.controls
 			}
 			this._direction = value;
 			this.invalidate(INVALIDATION_FLAG_DATA);
+			this.invalidate(INVALIDATION_FLAG_THUMB_FACTORY);
 		}
 
 		/**
 		 * Determines if the value should be clamped to the range between the
-		 * minimum and maximum. If false and the value is outside of the range,
+		 * minimum and maximum. If <code>false</code> and the value is outside of the range,
 		 * the thumb will shrink as if the range were increasing.
+		 *
+		 * <p>In the following example, the clamping behavior is updated:</p>
+		 *
+		 * <listing version="3.0">
+		 * scrollBar.clampToRange = true;</listing>
+		 *
+		 * @default false
 		 */
 		public var clampToRange:Boolean = false;
 
@@ -285,12 +343,48 @@ package feathers.controls
 		}
 
 		/**
+		 * Quickly sets all padding properties to the same value. The
+		 * <code>padding</code> getter always returns the value of
+		 * <code>paddingTop</code>, but the other padding values may be
+		 * different.
+		 *
+		 * <p>In the following example, the padding is changed to 20 pixels:</p>
+		 *
+		 * <listing version="3.0">
+		 * scrollBar.padding = 20;</listing>
+		 *
+		 * @default 0
+		 */
+		public function get padding():Number
+		{
+			return this._paddingTop;
+		}
+
+		/**
+		 * @private
+		 */
+		public function set padding(value:Number):void
+		{
+			this.paddingTop = value;
+			this.paddingRight = value;
+			this.paddingBottom = value;
+			this.paddingLeft = value;
+		}
+
+		/**
 		 * @private
 		 */
 		protected var _paddingTop:Number = 0;
 
 		/**
 		 * The minimum space, in pixels, above the thumb.
+		 *
+		 * <p>In the following example, the top padding is changed to 20 pixels:</p>
+		 *
+		 * <listing version="3.0">
+		 * scrollBar.paddingTop = 20;</listing>
+		 *
+		 * @default 0
 		 */
 		public function get paddingTop():Number
 		{
@@ -317,6 +411,13 @@ package feathers.controls
 
 		/**
 		 * The minimum space, in pixels, to the right of the thumb.
+		 *
+		 * <p>In the following example, the right padding is changed to 20 pixels:</p>
+		 *
+		 * <listing version="3.0">
+		 * scrollBar.paddingRight = 20;</listing>
+		 *
+		 * @default 0
 		 */
 		public function get paddingRight():Number
 		{
@@ -343,6 +444,13 @@ package feathers.controls
 
 		/**
 		 * The minimum space, in pixels, below the thumb.
+		 *
+		 * <p>In the following example, the bottom padding is changed to 20 pixels:</p>
+		 *
+		 * <listing version="3.0">
+		 * scrollBar.paddingBottom = 20;</listing>
+		 *
+		 * @default 0
 		 */
 		public function get paddingBottom():Number
 		{
@@ -369,6 +477,13 @@ package feathers.controls
 
 		/**
 		 * The minimum space, in pixels, to the left of the thumb.
+		 *
+		 * <p>In the following example, the left padding is changed to 20 pixels:</p>
+		 *
+		 * <listing version="3.0">
+		 * scrollBar.paddingLeft = 20;</listing>
+		 *
+		 * @default 0
 		 */
 		public function get paddingLeft():Number
 		{
@@ -407,6 +522,13 @@ package feathers.controls
 		 * The time, in seconds, before actions are repeated. The first repeat
 		 * happens after a delay that is five times longer than the following
 		 * repeats.
+		 *
+		 * <p>In the following example, the repeat delay is changed to 500 milliseconds:</p>
+		 *
+		 * <listing version="3.0">
+		 * scrollBar.repeatDelay = 0.5;</listing>
+		 *
+		 * @default 0.05
 		 */
 		public function get repeatDelay():Number
 		{
@@ -434,8 +556,109 @@ package feathers.controls
 		/**
 		 * Determines if the scroll bar dispatches the <code>Event.CHANGE</code>
 		 * event every time the thumb moves, or only once it stops moving.
+		 *
+		 * <p>In the following example, live dragging is disabled:</p>
+		 *
+		 * <listing version="3.0">
+		 * scrollBar.liveDragging = false;</listing>
+		 *
+		 * @default true
 		 */
 		public var liveDragging:Boolean = true;
+
+		/**
+		 * @private
+		 */
+		protected var _thumbFactory:Function;
+
+		/**
+		 * A function used to generate the scroll bar's thumb sub-component.
+		 * The thumb must be an instance of <code>Button</code>. This factory
+		 * can be used to change properties on the thumb when it is first
+		 * created. For instance, if you are skinning Feathers components
+		 * without a theme, you might use this factory to set skins and other
+		 * styles on the thumb.
+		 *
+		 * <p>The function should have the following signature:</p>
+		 * <pre>function():Button</pre>
+		 *
+		 * <p>In the following example, a custom thumb factory is passed
+		 * to the scroll bar:</p>
+		 *
+		 * <listing version="3.0">
+		 * scrollBar.thumbFactory = function():Button
+		 * {
+		 *     var thumb:Button = new Button();
+		 *     thumb.defaultSkin = new Image( upTexture );
+		 *     thumb.downSkin = new Image( downTexture );
+		 *     return thumb;
+		 * };</listing>
+		 *
+		 * @see feathers.controls.Button
+		 * @see #thumbProperties
+		 */
+		public function get thumbFactory():Function
+		{
+			return this._thumbFactory;
+		}
+
+		/**
+		 * @private
+		 */
+		public function set thumbFactory(value:Function):void
+		{
+			if(this._thumbFactory == value)
+			{
+				return;
+			}
+			this._thumbFactory = value;
+			this.invalidate(INVALIDATION_FLAG_THUMB_FACTORY);
+		}
+
+		/**
+		 * @private
+		 */
+		protected var _customThumbName:String;
+
+		/**
+		 * A name to add to the scroll bar's thumb sub-component. Typically
+		 * used by a theme to provide different skins to different scroll bars.
+		 *
+		 * <p>In the following example, a custom thumb name is passed
+		 * to the scroll bar:</p>
+		 *
+		 * <listing version="3.0">
+		 * scrollBar.customThumbName = "my-custom-thumb";</listing>
+		 *
+		 * <p>In your theme, you can target this sub-component name to provide
+		 * different skins than the default style:</p>
+		 *
+		 * <listing version="3.0">
+		 * setInitializerForClass( Button, customThumbInitializer, "my-custom-thumb");</listing>
+		 *
+		 * @see #DEFAULT_CHILD_NAME_THUMB
+		 * @see feathers.core.FeathersControl#nameList
+		 * @see feathers.core.DisplayListWatcher
+		 * @see #thumbFactory
+		 * @see #thumbProperties
+		 */
+		public function get customThumbName():String
+		{
+			return this._customThumbName;
+		}
+
+		/**
+		 * @private
+		 */
+		public function set customThumbName(value:String):void
+		{
+			if(this._customThumbName == value)
+			{
+				return;
+			}
+			this._customThumbName = value;
+			this.invalidate(INVALIDATION_FLAG_THUMB_FACTORY);
+		}
 
 		/**
 		 * @private
@@ -445,7 +668,7 @@ package feathers.controls
 		/**
 		 * A set of key/value pairs to be passed down to the scroll bar's thumb
 		 * sub-component. The thumb is a <code>feathers.controls.Button</code>
-		 * instance.
+		 * instance that is created by <code>thumbFactory</code>.
 		 *
 		 * <p>If the subcomponent has its own subcomponents, their properties
 		 * can be set too, using attribute <code>&#64;</code> notation. For example,
@@ -453,7 +676,19 @@ package feathers.controls
 		 * which is in a <code>Scroller</code> which is in a <code>List</code>,
 		 * you can use the following syntax:</p>
 		 * <pre>list.scrollerProperties.&#64;verticalScrollBarProperties.&#64;thumbProperties.defaultSkin = new Image(texture);</pre>
-		 * 
+		 *
+		 * <p>Setting properties in a <code>thumbFactory</code> function instead
+		 * of using <code>thumbProperties</code> will result in better
+		 * performance.</p>
+		 *
+		 * <p>In the following example, the scroll bar's thumb properties
+		 * are updated:</p>
+		 *
+		 * <listing version="3.0">
+		 * scrollBar.thumbProperties.defaultSkin = new Image( upTexture );
+		 * scrollBar.thumbProperties.downSkin = new Image( downTexture );</listing>
+		 *
+		 * @see #thumbFactory
 		 * @see feathers.controls.Button
 		 */
 		public function get thumbProperties():Object
@@ -541,16 +776,6 @@ package feathers.controls
 				this.track.addEventListener(TouchEvent.TOUCH, track_touchHandler);
 				this.addChild(this.track);
 			}
-
-			if(!this.thumb)
-			{
-				this.thumb = new Button();
-				this.thumb.nameList.add(this.thumbName);
-				this.thumb.label = "";
-				this.thumb.keepDownStateOnRollOut = true;
-				this.thumb.addEventListener(TouchEvent.TOUCH, thumb_touchHandler);
-				this.addChild(this.thumb);
-			}
 		}
 
 		/**
@@ -562,20 +787,26 @@ package feathers.controls
 			const stylesInvalid:Boolean = this.isInvalid(INVALIDATION_FLAG_STYLES);
 			var sizeInvalid:Boolean = this.isInvalid(INVALIDATION_FLAG_SIZE);
 			const stateInvalid:Boolean = this.isInvalid(INVALIDATION_FLAG_STATE);
+			const thumbFactoryInvalid:Boolean = this.isInvalid(INVALIDATION_FLAG_THUMB_FACTORY);
 
-			if(stylesInvalid)
+			if(thumbFactoryInvalid)
+			{
+				this.createThumb();
+			}
+
+			if(thumbFactoryInvalid || stylesInvalid)
 			{
 				this.refreshThumbStyles();
 			}
 
-			if(stateInvalid)
+			if(dataInvalid || thumbFactoryInvalid || stateInvalid)
 			{
-				this.thumb.isEnabled = this._isEnabled;
+				this.thumb.isEnabled = this._isEnabled && this._maximum > this._minimum;;
 			}
 
 			sizeInvalid = this.autoSizeIfNeeded() || sizeInvalid;
 
-			if(dataInvalid || stylesInvalid || sizeInvalid)
+			if(thumbFactoryInvalid || dataInvalid || stylesInvalid || sizeInvalid)
 			{
 				this.layout();
 			}
@@ -619,7 +850,14 @@ package feathers.controls
 					}
 					else
 					{
-						newWidth = Math.max(this.thumbOriginalWidth, this.thumbOriginalWidth * range / adjustedPageStep);
+						if(adjustedPageStep == 0)
+						{
+							newWidth = this.thumbOriginalWidth;
+						}
+						else
+						{
+							newWidth = Math.max(this.thumbOriginalWidth, this.thumbOriginalWidth * range / adjustedPageStep);
+						}
 					}
 				}
 				newWidth += this._paddingLeft + this._paddingRight;
@@ -634,7 +872,14 @@ package feathers.controls
 					}
 					else
 					{
-						newHeight = Math.max(this.thumbOriginalHeight, this.thumbOriginalHeight * range / adjustedPageStep);
+						if(adjustedPageStep == 0)
+						{
+							newHeight = this.thumbOriginalHeight;
+						}
+						else
+						{
+							newHeight = Math.max(this.thumbOriginalHeight, this.thumbOriginalHeight * range / adjustedPageStep);
+						}
 					}
 				}
 				else //horizontal
@@ -644,6 +889,27 @@ package feathers.controls
 				newHeight += this._paddingTop + this._paddingBottom;
 			}
 			return this.setSizeInternal(newWidth, newHeight, false);
+		}
+
+		/**
+		 * @private
+		 */
+		protected function createThumb():void
+		{
+			if(this.thumb)
+			{
+				this.thumb.removeFromParent(true);
+				this.thumb = null;
+			}
+
+			const factory:Function = this._thumbFactory != null ? this._thumbFactory : defaultThumbFactory;
+			const thumbName:String = this._customThumbName != null ? this._customThumbName : this.thumbName;
+			this.thumb = Button(factory());
+			this.thumb.nameList.add(thumbName);
+			this.thumb.isFocusEnabled = false;
+			this.thumb.keepDownStateOnRollOut = true;
+			this.thumb.addEventListener(TouchEvent.TOUCH, thumb_touchHandler);
+			this.addChild(this.thumb);
 		}
 
 		/**
@@ -723,15 +989,15 @@ package feathers.controls
 			var percentage:Number;
 			if(this._direction == DIRECTION_VERTICAL)
 			{
-				const trackScrollableHeight:Number = this.actualHeight - this.thumb.height;
-				const yOffset:Number = location.y - this._touchStartY;
+				const trackScrollableHeight:Number = this.actualHeight - this.thumb.height - this._paddingTop - this._paddingBottom;
+				const yOffset:Number = location.y - this._touchStartY - this._paddingTop;
 				const yPosition:Number = Math.min(Math.max(0, this._thumbStartY + yOffset), trackScrollableHeight);
 				percentage = yPosition / trackScrollableHeight;
 			}
 			else //horizontal
 			{
-				const trackScrollableWidth:Number = this.actualWidth - this.thumb.width;
-				const xOffset:Number = location.x - this._touchStartX;
+				const trackScrollableWidth:Number = this.actualWidth - this.thumb.width - this._paddingLeft - this._paddingRight;
+				const xOffset:Number = location.x - this._touchStartX - this._paddingLeft;
 				const xPosition:Number = Math.min(Math.max(0, this._thumbStartX + xOffset), trackScrollableWidth);
 				percentage = xPosition / trackScrollableWidth;
 			}

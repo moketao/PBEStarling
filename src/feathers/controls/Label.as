@@ -19,6 +19,7 @@ package feathers.controls
 	 * Displays text.
 	 *
 	 * @see http://wiki.starling-framework.org/feathers/label
+	 * @see http://wiki.starling-framework.org/feathers/text-renderers
 	 */
 	public class Label extends FeathersControl
 	{
@@ -47,6 +48,11 @@ package feathers.controls
 
 		/**
 		 * The text displayed by the label.
+		 *
+		 * <p>In the following example, the label's text is updated:</p>
+		 *
+		 * <listing version="3.0">
+		 * label.text = "Hello World";</listing>
 		 */
 		public function get text():String
 		{
@@ -85,12 +91,26 @@ package feathers.controls
 		protected var _textRendererFactory:Function;
 
 		/**
-		 * A function used to instantiate the text renderer. If null,
-		 * <code>FeathersControl.defaultTextRendererFactory</code> is used
-		 * instead.
+		 * A function used to instantiate the label's text renderer
+		 * sub-component. By default, the label will use the global text
+		 * renderer factory, <code>FeathersControl.defaultTextRendererFactory()</code>,
+		 * to create the text renderer. The text renderer must be an instance of
+		 * <code>ITextRenderer</code>. This factory can be used to change
+		 * properties on the text renderer when it is first created. For
+		 * instance, if you are skinning Feathers components without a theme,
+		 * you might use this factory to style the text renderer.
 		 *
 		 * <p>The factory should have the following function signature:</p>
 		 * <pre>function():ITextRenderer</pre>
+		 *
+		 * <p>In the following example, a custom text renderer factory is passed
+		 * to the label:</p>
+		 *
+		 * <listing version="3.0">
+		 * label.textRendererFactory = function():ITextRenderer
+		 * {
+		 *     return new TextFieldTextRenderer();
+		 * }</listing>
 		 *
 		 * @see feathers.core.ITextRenderer
 		 * @see feathers.core.FeathersControl#defaultTextRendererFactory
@@ -119,7 +139,12 @@ package feathers.controls
 		protected var _textRendererProperties:PropertyProxy;
 
 		/**
-		 * A set of key/value pairs to be passed down to the text renderer.
+		 * A set of key/value pairs to be passed down to the text renderer. The
+		 * text renderer is an <code>ITextRenderer</code> instance. The
+		 * available properties depend on which <code>ITextRenderer</code>
+		 * implementation is returned by <code>textRendererFactory</code>. The
+		 * most common implementations are <code>BitmapFontTextRenderer</code>
+		 * and <code>TextFieldTextRenderer</code>.
 		 *
 		 * <p>If the subcomponent has its own subcomponents, their properties
 		 * can be set too, using attribute <code>&#64;</code> notation. For example,
@@ -128,7 +153,22 @@ package feathers.controls
 		 * you can use the following syntax:</p>
 		 * <pre>list.scrollerProperties.&#64;verticalScrollBarProperties.&#64;thumbProperties.defaultSkin = new Image(texture);</pre>
 		 *
+		 * <p>Setting properties in a <code>textRendererFactory</code> function
+		 * instead of using <code>textRendererProperties</code> will result in
+		 * better performance.</p>
+		 *
+		 * <p>In the following example, the label's text renderer's properties
+		 * are updated (this example assumes that the label text renderer is a
+		 * <code>TextFieldTextRenderer</code>):</p>
+		 *
+		 * <listing version="3.0">
+		 * label.textRendererProperties.textFormat = new TextFormat( "Source Sans Pro", 16, 0x333333 );
+		 * label.textRendererProperties.embedFonts = true;</listing>
+		 *
+		 * @see #textRendererFactory
 		 * @see feathers.core.ITextRenderer
+		 * @see feathers.controls.text.BitmapFontTextRenderer
+		 * @see feathers.controls.text.TextFieldTextRenderer
 		 */
 		public function get textRendererProperties():Object
 		{
@@ -197,10 +237,7 @@ package feathers.controls
 
 			sizeInvalid = this.autoSizeIfNeeded() || sizeInvalid;
 
-			if(textRendererInvalid || dataInvalid || stateInvalid || sizeInvalid || stylesInvalid)
-			{
-				this.layout();
-			}
+			this.layout();
 		}
 
 		/**
@@ -217,6 +254,9 @@ package feathers.controls
 			this.textRenderer.minWidth = this._minWidth;
 			this.textRenderer.maxWidth = this._maxWidth;
 			this.textRenderer.width = this.explicitWidth;
+			this.textRenderer.minHeight = this._minHeight;
+			this.textRenderer.maxHeight = this._maxHeight;
+			this.textRenderer.height = this.explicitHeight;
 			this.textRenderer.measureText(HELPER_POINT);
 			var newWidth:Number = this.explicitWidth;
 			if(needsWidth)
@@ -302,6 +342,7 @@ package feathers.controls
 		protected function layout():void
 		{
 			this.textRenderer.width = this.actualWidth;
+			this.textRenderer.height = this.actualHeight;
 			this.textRenderer.validate();
 			this._baseline = this.textRenderer.baseline;
 		}

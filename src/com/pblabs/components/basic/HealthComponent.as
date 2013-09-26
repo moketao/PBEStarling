@@ -13,6 +13,7 @@ package com.pblabs.components.basic
     import com.pblabs.engine.core.ProcessManager;
     import com.pblabs.engine.entity.EntityComponent;
     import com.pblabs.engine.entity.IEntity;
+	import flash.geom.Point;
 
     /**
      * General purpose component for tracking health.
@@ -76,25 +77,25 @@ package com.pblabs.components.basic
             
             if(value < _health)
             {
-                he = new HealthEvent(HealthEvent.DAMAGED, value - _health, value, _lastDamageOriginator);
+                he = new HealthEvent(HealthEvent.DAMAGED, value - _health, value, _lastDamageOriginator, _lastDamageLocation);
                 owner.eventDispatcher.dispatchEvent(he);
             }
             
             if(_health > 0 && value == 0)
             {
-                he = new HealthEvent(HealthEvent.DIED, value - _health, value, _lastDamageOriginator);
+                he = new HealthEvent(HealthEvent.DIED, value - _health, value, _lastDamageOriginator, _lastDamageLocation);
                 owner.eventDispatcher.dispatchEvent(he);
             }
             
             if(_health == 0 && value > 0)
             {
-                he = new HealthEvent(HealthEvent.RESURRECTED, value - _health, value, _lastDamageOriginator);
+                he = new HealthEvent(HealthEvent.RESURRECTED, value - _health, value, _lastDamageOriginator, _lastDamageLocation);
                 owner.eventDispatcher.dispatchEvent(he);
             }
             
             if(_health > 0 && value > _health)
             {
-                he = new HealthEvent(HealthEvent.HEALED, value - _health, value, _lastDamageOriginator);
+                he = new HealthEvent(HealthEvent.HEALED, value - _health, value, _lastDamageOriginator, _lastDamageLocation);
                 if(owner && owner.eventDispatcher)
                     owner.eventDispatcher.dispatchEvent(he);
             }
@@ -119,9 +120,10 @@ package com.pblabs.components.basic
          *                          to lookup and apply a damage modifier from DamageModifier.
          * @param originator The entity causing the damage, if any.
          */
-        public function damage(amount:Number, damageType:String = null, originator:IEntity = null):void
+        public function damage(amount:Number, damageType:String = null, originator:IEntity = null, location:Point=null):void
         {
             _lastDamageOriginator = originator;
+            _lastDamageLocation = location;
             
             // Allow modification of damage based on type.
             if(damageType && damageModifier.hasOwnProperty(damageType))
@@ -151,6 +153,7 @@ package com.pblabs.components.basic
         private var _health:Number = 100;
         private var _timeOfLastDamage:Number = 0;
         private var _lastDamageOriginator:IEntity = null;
+        private var _lastDamageLocation:Point = null;
         
     }
 }

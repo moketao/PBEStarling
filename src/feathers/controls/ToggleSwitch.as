@@ -8,6 +8,7 @@ accordance with the terms of the accompanying license agreement.
 package feathers.controls
 {
 	import feathers.core.FeathersControl;
+	import feathers.core.IFocusDisplayObject;
 	import feathers.core.ITextRenderer;
 	import feathers.core.IToggle;
 	import feathers.core.PropertyProxy;
@@ -15,18 +16,20 @@ package feathers.controls
 
 	import flash.geom.Point;
 	import flash.geom.Rectangle;
+	import flash.ui.Keyboard;
 
 	import starling.animation.Transitions;
 	import starling.animation.Tween;
 	import starling.core.Starling;
 	import starling.display.DisplayObject;
 	import starling.events.Event;
+	import starling.events.KeyboardEvent;
 	import starling.events.Touch;
 	import starling.events.TouchEvent;
 	import starling.events.TouchPhase;
 
 	/**
-	 * @inheritDoc
+	 * @copy feathers.core.IToggle#event:change
 	 */
 	[Event(name="change",type="starling.events.Event")]
 
@@ -34,10 +37,19 @@ package feathers.controls
 	 * Similar to a light switch with on and off states. Generally considered an
 	 * alternative to a check box.
 	 *
+	 * <p>The following example programmatically selects a toggle switch and
+	 * listens for when the selection changes:</p>
+	 *
+	 * <listing version="3.0">
+	 * var toggle:ToggleSwitch = new ToggleSwitch();
+	 * toggle.isSelected = true;
+	 * toggle.addEventListener( Event.CHANGE, toggle_changeHandler );
+	 * this.addChild( toggle );</listing>
+	 *
 	 * @see http://wiki.starling-framework.org/feathers/toggle-switch
 	 * @see Check
 	 */
-	public class ToggleSwitch extends FeathersControl implements IToggle
+	public class ToggleSwitch extends FeathersControl implements IToggle, IFocusDisplayObject
 	{
 		/**
 		 * @private
@@ -57,22 +69,43 @@ package feathers.controls
 		private static const MINIMUM_DRAG_DISTANCE:Number = 0.04;
 
 		/**
+		 * @private
+		 */
+		protected static const INVALIDATION_FLAG_THUMB_FACTORY:String = "thumbFactory";
+
+		/**
+		 * @private
+		 */
+		protected static const INVALIDATION_FLAG_ON_TRACK_FACTORY:String = "onTrackFactory";
+
+		/**
+		 * @private
+		 */
+		protected static const INVALIDATION_FLAG_OFF_TRACK_FACTORY:String = "offTrackFactory";
+
+		/**
 		 * The ON and OFF labels will be aligned to the middle vertically,
 		 * based on the full character height of the font.
+		 *
+		 * @see #labelAlign
 		 */
 		public static const LABEL_ALIGN_MIDDLE:String = "middle";
 
 		/**
 		 * The ON and OFF labels will be aligned to the middle vertically,
 		 * based on only the baseline value of the font.
+		 *
+		 * @see #labelAlign
 		 */
 		public static const LABEL_ALIGN_BASELINE:String = "baseline";
 
 		/**
 		 * The toggle switch has only one track skin, stretching to fill the
 		 * full length of switch. In this layout mode, the on track is
-		 * displayed and fills the entire length of the slider. The off
+		 * displayed and fills the entire length of the toggle switch. The off
 		 * track will not exist.
+		 *
+		 * @see #trackLayoutMode
 		 */
 		public static const TRACK_LAYOUT_MODE_SINGLE:String = "single";
 
@@ -84,10 +117,11 @@ package feathers.controls
 		 * differentiate between the on state and the off state.
 		 *
 		 * <p>Since the width and height of the tracks will change, consider
-		 * sing a special display object such as a <code>Scale9Image</code>,
+		 * using a special display object such as a <code>Scale9Image</code>,
 		 * <code>Scale3Image</code> or a <code>TiledImage</code> that is
 		 * designed to be resized dynamically.</p>
 		 *
+		 * @see #trackLayoutMode
 		 * @see feathers.display.Scale9Image
 		 * @see feathers.display.Scale3Image
 		 * @see feathers.display.TiledImage
@@ -96,28 +130,62 @@ package feathers.controls
 
 		/**
 		 * The default value added to the <code>nameList</code> of the off label.
+		 *
+		 * @see feathers.core.IFeathersControl#nameList
 		 */
 		public static const DEFAULT_CHILD_NAME_OFF_LABEL:String = "feathers-toggle-switch-off-label";
 
 		/**
 		 * The default value added to the <code>nameList</code> of the on label.
+		 *
+		 * @see feathers.core.IFeathersControl#nameList
 		 */
 		public static const DEFAULT_CHILD_NAME_ON_LABEL:String = "feathers-toggle-switch-on-label";
 
 		/**
 		 * The default value added to the <code>nameList</code> of the off track.
+		 *
+		 * @see feathers.core.IFeathersControl#nameList
 		 */
 		public static const DEFAULT_CHILD_NAME_OFF_TRACK:String = "feathers-toggle-switch-off-track";
 
 		/**
 		 * The default value added to the <code>nameList</code> of the on track.
+		 *
+		 * @see feathers.core.IFeathersControl#nameList
 		 */
 		public static const DEFAULT_CHILD_NAME_ON_TRACK:String = "feathers-toggle-switch-on-track";
 
 		/**
 		 * The default value added to the <code>nameList</code> of the thumb.
+		 *
+		 * @see feathers.core.IFeathersControl#nameList
 		 */
 		public static const DEFAULT_CHILD_NAME_THUMB:String = "feathers-toggle-switch-thumb";
+
+		/**
+		 * @private
+		 */
+		protected static function defaultThumbFactory():Button
+		{
+			return new Button();
+		}
+
+		/**
+		 * @private
+		 */
+		protected static function defaultOnTrackFactory():Button
+		{
+			return new Button();
+		}
+
+		/**
+		 * @private
+		 */
+		protected static function defaultOffTrackFactory():Button
+		{
+			return new Button();
+		}
 
 		/**
 		 * Constructor.
@@ -125,32 +193,69 @@ package feathers.controls
 		public function ToggleSwitch()
 		{
 			super();
-			this.addEventListener(TouchEvent.TOUCH, touchHandler);
-			this.addEventListener(Event.REMOVED_FROM_STAGE, removedFromStageHandler);
+			this.addEventListener(TouchEvent.TOUCH, toggleSwitch_touchHandler);
+			this.addEventListener(Event.REMOVED_FROM_STAGE, toggleSwitch_removedFromStageHandler);
 		}
 
 		/**
-		 * The value added to the <code>nameList</code> of the off label.
+		 * The value added to the <code>nameList</code> of the off label. This
+		 * variable is <code>protected</code> so that sub-classes can customize
+		 * the on label name in their constructors instead of using the default
+		 * name defined by <code>DEFAULT_CHILD_NAME_ON_LABEL</code>.
+		 *
+		 * @see feathers.core.IFeathersControl#nameList
 		 */
 		protected var onLabelName:String = DEFAULT_CHILD_NAME_ON_LABEL;
 
 		/**
-		 * The value added to the <code>nameList</code> of the on label.
+		 * The value added to the <code>nameList</code> of the on label. This
+		 * variable is <code>protected</code> so that sub-classes can customize
+		 * the off label name in their constructors instead of using the default
+		 * name defined by <code>DEFAULT_CHILD_NAME_OFF_LABEL</code>.
+		 *
+		 * @see feathers.core.IFeathersControl#nameList
 		 */
 		protected var offLabelName:String = DEFAULT_CHILD_NAME_OFF_LABEL;
 
 		/**
-		 * The value added to the <code>nameList</code> of the on track.
+		 * The value added to the <code>nameList</code> of the on track. This
+		 * variable is <code>protected</code> so that sub-classes can customize
+		 * the on track name in their constructors instead of using the default
+		 * name defined by <code>DEFAULT_CHILD_NAME_ON_TRACK</code>.
+		 *
+		 * <p>To customize the on track name without subclassing, see
+		 * <code>customOnTrackName</code>.</p>
+		 *
+		 * @see #customOnTrackName
+		 * @see feathers.core.IFeathersControl#nameList
 		 */
 		protected var onTrackName:String = DEFAULT_CHILD_NAME_ON_TRACK;
 
 		/**
-		 * The value added to the <code>nameList</code> of the off track.
+		 * The value added to the <code>nameList</code> of the off track. This
+		 * variable is <code>protected</code> so that sub-classes can customize
+		 * the off track name in their constructors instead of using the default
+		 * name defined by <code>DEFAULT_CHILD_NAME_OFF_TRACK</code>.
+		 *
+		 * <p>To customize the off track name without subclassing, see
+		 * <code>customOffTrackName</code>.</p>
+		 *
+		 * @see #customOffTrackName
+		 * @see feathers.core.IFeathersControl#nameList
 		 */
 		protected var offTrackName:String = DEFAULT_CHILD_NAME_OFF_TRACK;
 
 		/**
-		 * The value added to the <code>nameList</code> of the thumb.
+		 * The value added to the <code>nameList</code> of the thumb. This
+		 * variable is <code>protected</code> so that sub-classes can customize
+		 * the thumb name in their constructors instead of using the default
+		 * name defined by <code>DEFAULT_CHILD_NAME_THUMB</code>.
+		 *
+		 * <p>To customize the thumb name without subclassing, see
+		 * <code>customThumbName</code>.</p>
+		 *
+		 * @see #customThumbName
+		 * @see feathers.core.IFeathersControl#nameList
 		 */
 		protected var thumbName:String = DEFAULT_CHILD_NAME_THUMB;
 
@@ -187,6 +292,14 @@ package feathers.controls
 		/**
 		 * The minimum space, in pixels, between the switch's right edge and the
 		 * switch's content.
+		 *
+		 * <p>In the following example, the toggle switch's right padding is
+		 * set to 20 pixels:</p>
+		 *
+		 * <listing version="3.0">
+		 * toggle.paddingRight = 20;</listing>
+		 *
+		 * @default 0
 		 */
 		public function get paddingRight():Number
 		{
@@ -214,6 +327,17 @@ package feathers.controls
 		/**
 		 * The minimum space, in pixels, between the switch's left edge and the
 		 * switch's content.
+		 *
+		 * <p>In the following example, the toggle switch's left padding is
+		 * set to 20 pixels:</p>
+		 *
+		 * <listing version="3.0">
+		 *
+		 *
+		 * <listing version="3.0">
+		 * toggle.customOnTrackName = "my-custom-on-track";</listing>.paddingLeft = 20;</listing>
+		 *
+		 * @default 0
 		 */
 		public function get paddingLeft():Number
 		{
@@ -241,6 +365,13 @@ package feathers.controls
 		/**
 		 * Determines if the labels should be drawn. The onTrackSkin and
 		 * offTrackSkin backgrounds may include the text instead.
+		 *
+		 * <p>In the following example, the toggle switch's labels are hidden:</p>
+		 *
+		 * <listing version="3.0">
+		 * toggle.showLabels = false;</listing>
+		 *
+		 * @default true
 		 */
 		public function get showLabels():Boolean
 		{
@@ -268,6 +399,13 @@ package feathers.controls
 		/**
 		 * Determines if the thumb should be displayed. This stops interaction
 		 * while still displaying the background.
+		 *
+		 * <p>In the following example, the toggle switch's thumb is hidden:</p>
+		 *
+		 * <listing version="3.0">
+		 * toggle.showThumb = false;</listing>
+		 *
+		 * @default true
 		 */
 		public function get showThumb():Boolean
 		{
@@ -296,7 +434,14 @@ package feathers.controls
 		/**
 		 * Determines how the on and off track skins are positioned and sized.
 		 *
-		 * @default TRACK_LAYOUT_MODE_SINGLE
+		 * <p>In the following example, the toggle switch's track layout mode is
+		 * updated to use two tracks:</p>
+		 *
+		 * <listing version="3.0">
+		 * toggle.trackLayoutMode = ToggleSwitch.TRACK_LAYOUT_MODE_ON_OFF;</listing>
+		 *
+		 * @default ToggleSwitch.TRACK_LAYOUT_MODE_SINGLE
+		 *
 		 * @see #TRACK_LAYOUT_MODE_SINGLE
 		 * @see #TRACK_LAYOUT_MODE_ON_OFF
 		 */
@@ -324,12 +469,27 @@ package feathers.controls
 		protected var _defaultLabelProperties:PropertyProxy;
 
 		/**
-		 * The key/value pairs to pass to the labels, if no higher priority
-		 * format is available. For the ON label, <code>onLabelProperties</code>
-		 * takes priority. For the OFF label, <code>offLabelProperties</code>
-		 * takes priority.
+		 * The default label properties are a set of key/value pairs to be
+		 * passed down to the toggle switch's label text renderers, and it is
+		 * used when no specific properties are defined for a specific label
+		 * text renderer's current state. The label text renderers are <code>ITextRenderer</code>
+		 * instances. The available properties depend on which <code>ITextRenderer</code>
+		 * implementation is returned by <code>labelFactory</code>. The most
+		 * common implementations are <code>BitmapFontTextRenderer</code> and
+		 * <code>TextFieldTextRenderer</code>.
 		 *
+		 * <p>In the following example, the toggle switch's default label
+		 * properties are updated (this example assumes that the label text
+		 * renderers are of type <code>TextFieldTextRenderer</code>):</p>
+		 *
+		 * <listing version="3.0">
+		 * toggle.defaultLabelProperties.textFormat = new TextFormat( "Source Sans Pro", 16, 0x333333 );
+		 * toggle.defaultLabelProperties.embedFonts = true;</listing>
+		 *
+		 * @see #labelFactory
 		 * @see feathers.core.ITextRenderer
+		 * @see feathers.controls.text.BitmapFontTextRenderer
+		 * @see feathers.controls.text.TextFieldTextRenderer
 		 * @see #onLabelProperties
 		 * @see #offLabelProperties
 		 * @see #disabledLabelProperties
@@ -370,10 +530,27 @@ package feathers.controls
 		protected var _disabledLabelProperties:PropertyProxy;
 
 		/**
-		 * The key/value pairs to pass to the labels, if the toggle switch is
-		 * disabled.
+		 * A set of key/value pairs to be passed down to the toggle switch's
+		 * label text renderers when the toggle switch is disabled. The label
+		 * text renderers are <code>ITextRenderer</code> instances. The
+		 * available properties depend on which <code>ITextRenderer</code>
+		 * implementation is returned by <code>labelFactory</code>. The most
+		 * common implementations are <code>BitmapFontTextRenderer</code> and
+		 * <code>TextFieldTextRenderer</code>.
 		 *
+		 * <p>In the following example, the toggle switch's disabled label
+		 * properties are updated (this example assumes that the label text
+		 * renderers are of type <code>TextFieldTextRenderer</code>):</p>
+		 *
+		 * <listing version="3.0">
+		 * toggle.disabledLabelProperties.textFormat = new TextFormat( "Source Sans Pro", 16, 0x333333 );
+		 * toggle.disabledLabelProperties.embedFonts = true;</listing>
+		 *
+		 * @see #labelFactory
 		 * @see feathers.core.ITextRenderer
+		 * @see feathers.controls.text.BitmapFontTextRenderer
+		 * @see feathers.controls.text.TextFieldTextRenderer
+		 * @see #defaultLabelProperties
 		 */
 		public function get disabledLabelProperties():Object
 		{
@@ -411,10 +588,28 @@ package feathers.controls
 		protected var _onLabelProperties:PropertyProxy;
 
 		/**
-		 * The key/value pairs passed to the ON label. If <code>null</code>,
-		 * then <code>defaultLabelProperties</code> will be used instead.
+		 * A set of key/value pairs to be passed down to the toggle switch's
+		 * ON label text renderer. If <code>null</code>, then
+		 * <code>defaultLabelProperties</code> is used instead. The label text
+		 * renderers are <code>ITextRenderer</code> instances. The available
+		 * properties depend on which <code>ITextRenderer</code> implementation
+		 * is returned by <code>labelFactory</code>. The most common
+		 * implementations are <code>BitmapFontTextRenderer</code> and
+		 * <code>TextFieldTextRenderer</code>.
 		 *
+		 * <p>In the following example, the toggle switch's on label properties
+		 * are updated (this example assumes that the on label text renderer is a
+		 * <code>TextFieldTextRenderer</code>):</p>
+		 *
+		 * <listing version="3.0">
+		 * toggle.onLabelProperties.textFormat = new TextFormat( "Source Sans Pro", 16, 0x333333 );
+		 * toggle.onLabelProperties.embedFonts = true;</listing>
+		 *
+		 * @see #labelFactory
 		 * @see feathers.core.ITextRenderer
+		 * @see feathers.controls.text.BitmapFontTextRenderer
+		 * @see feathers.controls.text.TextFieldTextRenderer
+		 * @see #defaultLabelProperties
 		 */
 		public function get onLabelProperties():Object
 		{
@@ -452,10 +647,28 @@ package feathers.controls
 		protected var _offLabelProperties:PropertyProxy;
 
 		/**
-		 * The key/value pairs passed to the OFF label. If <code>null</code>,
-		 * then <code>defaultLabelProperties</code> will be used instead.
+		 * A set of key/value pairs to be passed down to the toggle switch's
+		 * OFF label text renderer. If <code>null</code>, then
+		 * <code>defaultLabelProperties</code> is used instead. The label text
+		 * renderers are <code>ITextRenderer</code> instances. The available
+		 * properties depend on which <code>ITextRenderer</code> implementation
+		 * is returned by <code>labelFactory</code>. The most common
+		 * implementations are <code>BitmapFontTextRenderer</code> and
+		 * <code>TextFieldTextRenderer</code>.
 		 *
+		 * <p>In the following example, the toggle switch's off label properties
+		 * are updated (this example assumes that the off label text renderer is a
+		 * <code>TextFieldTextRenderer</code>):</p>
+		 *
+		 * <listing version="3.0">
+		 * toggle.offLabelProperties.textFormat = new TextFormat( "Source Sans Pro", 16, 0x333333 );
+		 * toggle.offLabelProperties.embedFonts = true;</listing>
+		 *
+		 * @see #labelFactory
 		 * @see feathers.core.ITextRenderer
+		 * @see feathers.controls.text.BitmapFontTextRenderer
+		 * @see feathers.controls.text.TextFieldTextRenderer
+		 * @see #defaultLabelProperties
 		 */
 		public function get offLabelProperties():Object
 		{
@@ -495,6 +708,17 @@ package feathers.controls
 		[Inspectable(type="String",enumeration="baseline,middle")]
 		/**
 		 * The vertical alignment of the label.
+		 *
+		 * <p>In the following example, the toggle switch's label alignment is
+		 * updated:</p>
+		 *
+		 * <listing version="3.0">
+		 * toggle.labelAlign = ToggleSwitch.LABEL_ALIGN_MIDDLE;</listing>
+		 *
+		 * @default ToggleSwitch.LABEL_ALIGN_BASELINE
+		 *
+		 * @see #LABEL_ALIGN_BASELINE
+		 * @see #LABEL_ALIGN_MIDDLE
 		 */
 		public function get labelAlign():String
 		{
@@ -520,10 +744,24 @@ package feathers.controls
 		protected var _labelFactory:Function;
 
 		/**
-		 * A function used to instantiate the toggle switch's label subcomponents.
+		 * A function used to instantiate the toggle switch's label text
+		 * renderer sub-components. The label text renderers must be instances
+		 * of <code>ITextRenderer</code>. This factory can be used to change
+		 * properties on the label text renderer when it is first created. For
+		 * instance, if you are skinning Feathers components without a theme,
+		 * you might use this factory to style the label text renderer.
 		 *
 		 * <p>The factory should have the following function signature:</p>
 		 * <pre>function():ITextRenderer</pre>
+		 *
+		 * <p>In the following example, the toggle switch uses a custom label
+		 * factory:</p>
+		 *
+		 * <listing version="3.0">
+		 * toggle.labelFactory = function():ITextRenderer
+		 * {
+		 *     return new TextFieldTextRenderer();
+		 * }</listing>
 		 *
 		 * @see feathers.core.ITextRenderer
 		 * @see feathers.core.FeathersControl#defaultTextRendererFactory
@@ -573,6 +811,13 @@ package feathers.controls
 
 		/**
 		 * Indicates if the toggle switch is selected (ON) or not (OFF).
+		 *
+		 * <p>In the following example, the toggle switch is selected:</p>
+		 *
+		 * <listing version="3.0">
+		 * toggle.isSelected = true;</listing>
+		 *
+		 * @default false
 		 */
 		public function get isSelected():Boolean
 		{
@@ -606,6 +851,12 @@ package feathers.controls
 		/**
 		 * The duration, in seconds, of the animation when the toggle switch
 		 * is toggled and animates the position of the thumb.
+		 *
+		 * <p>In the following example, the duration of the toggle switch thumb
+		 * animation is updated:</p>
+		 *
+		 * <listing version="3.0">
+		 * toggle.toggleDuration = 0.5;</listing>
 		 */
 		public function get toggleDuration():Number
 		{
@@ -627,6 +878,12 @@ package feathers.controls
 
 		/**
 		 * The easing function used for toggle animations.
+		 *
+		 * <p>In the following example, the easing function used by the toggle
+		 * switch's thumb animation is updated:</p>
+		 *
+		 * <listing version="3.0">
+		 * toggle.toggleEase = Transitions.EASE_IN_OUT;</listing>
 		 */
 		public function get toggleEase():Object
 		{
@@ -648,6 +905,12 @@ package feathers.controls
 
 		/**
 		 * The text to display in the ON label.
+		 *
+		 * <p>In the following example, the toggle switch's on label text is
+		 * updated:</p>
+		 *
+		 * <listing version="3.0">
+		 * toggle.onText = "on";</listing>
 		 */
 		public function get onText():String
 		{
@@ -678,6 +941,12 @@ package feathers.controls
 
 		/**
 		 * The text to display in the OFF label.
+		 *
+		 * <p>In the following example, the toggle switch's off label text is
+		 * updated:</p>
+		 *
+		 * <listing version="3.0">
+		 * toggle.offText = "off";</listing>
 		 */
 		public function get offText():String
 		{
@@ -734,6 +1003,105 @@ package feathers.controls
 		/**
 		 * @private
 		 */
+		protected var _onTrackFactory:Function;
+
+		/**
+		 * A function used to generate the toggle switch's on track
+		 * sub-component. The on track must be an instance of <code>Button</code>.
+		 * This factory can be used to change properties on the on track when it
+		 * is first created. For instance, if you are skinning Feathers
+		 * components without a theme, you might use this factory to set skins
+		 * and other styles on the on track.
+		 *
+		 * <p>The function should have the following signature:</p>
+		 * <pre>function():Button</pre>
+		 *
+		 * <p>In the following example, a custom on track factory is passed to
+		 * the toggle switch:</p>
+		 *
+		 * <listing version="3.0">
+		 * toggle.onTrackFactory = function():Button
+		 * {
+		 *     var onTrack:Button = new Button();
+		 *     onTrack.defaultSkin = new Image( texture );
+		 *     return onTrack;
+		 * };</listing>
+		 *
+		 * @see feathers.controls.Button
+		 * @see #onTrackProperties
+		 */
+		public function get onTrackFactory():Function
+		{
+			return this._onTrackFactory;
+		}
+
+		/**
+		 * @private
+		 */
+		public function set onTrackFactory(value:Function):void
+		{
+			if(this._onTrackFactory == value)
+			{
+				return;
+			}
+			this._onTrackFactory = value;
+			this.invalidate(INVALIDATION_FLAG_ON_TRACK_FACTORY);
+		}
+
+		/**
+		 * @private
+		 */
+		protected var _customOnTrackName:String;
+
+		/**
+		 * A name to add to the toggle switch's on track sub-component. Typically
+		 * used by a theme to provide different skins to different toggle switches.
+		 *
+		 * <p>In the following example, a custom on track name is passed to
+		 * the toggle switch:</p>
+		 *
+		 * <listing version="3.0">
+		 * toggle.customOnTrackName = "my-custom-on-track";</listing>
+		 *
+		 * <p>In your theme, you can target this item renderer name to provide
+		 * different skins than the default style:</p>
+		 *
+		 * <listing version="3.0">
+		 * setInitializerForClass( Button, customOnTrackInitializer, "my-custom-on-track");</listing>
+		 *
+		 * <p>In your theme, you can target this sub-component name to provide
+		 * different skins than the default style:</p>
+		 *
+		 * <listing version="3.0">
+		 * setInitializerForClass( Button, customOnTrackInitializer, "my-custom-on-track");</listing>
+		 *
+		 * @see #DEFAULT_CHILD_NAME_ON_TRACK
+		 * @see feathers.core.FeathersControl#nameList
+		 * @see feathers.core.DisplayListWatcher
+		 * @see #onTrackFactory
+		 * @see #onTrackProperties
+		 */
+		public function get customOnTrackName():String
+		{
+			return this._customOnTrackName;
+		}
+
+		/**
+		 * @private
+		 */
+		public function set customOnTrackName(value:String):void
+		{
+			if(this._customOnTrackName == value)
+			{
+				return;
+			}
+			this._customOnTrackName = value;
+			this.invalidate(INVALIDATION_FLAG_ON_TRACK_FACTORY);
+		}
+
+		/**
+		 * @private
+		 */
 		protected var _onTrackProperties:PropertyProxy;
 
 		/**
@@ -747,8 +1115,19 @@ package feathers.controls
 		 * which is in a <code>Scroller</code> which is in a <code>List</code>,
 		 * you can use the following syntax:</p>
 		 * <pre>list.scrollerProperties.&#64;verticalScrollBarProperties.&#64;thumbProperties.defaultSkin = new Image(texture);</pre>
+		 *
+		 * <p>Setting properties in a <code>onTrackFactory</code> function
+		 * instead of using <code>onTrackProperties</code> will result in
+		 * better performance.</p>
+		 *
+		 * <p>In the following example, the toggle switch's on track properties
+		 * are updated:</p>
+		 *
+		 * <listing version="3.0">
+		 * toggle.onTrackProperties.defaultSkin = new Image( texture );</listing>
 		 * 
 		 * @see feathers.controls.Button
+		 * @see #onTrackFactory
 		 */
 		public function get onTrackProperties():Object
 		{
@@ -796,6 +1175,99 @@ package feathers.controls
 		/**
 		 * @private
 		 */
+		protected var _offTrackFactory:Function;
+
+		/**
+		 * A function used to generate the toggle switch's off track
+		 * sub-component. The off track must be an instance of <code>Button</code>.
+		 * This factory can be used to change properties on the off track when it
+		 * is first created. For instance, if you are skinning Feathers
+		 * components without a theme, you might use this factory to set skins
+		 * and other styles on the off track.
+		 *
+		 * <p>The function should have the following signature:</p>
+		 * <pre>function():Button</pre>
+		 *
+		 * <p>In the following example, a custom off track factory is passed to
+		 * the toggle switch:</p>
+		 *
+		 * <listing version="3.0">
+		 * toggle.offTrackFactory = function():Button
+		 * {
+		 *     var offTrack:Button = new Button();
+		 *     offTrack.defaultSkin = new Image( texture );
+		 *     return offTrack;
+		 * };</listing>
+		 *
+		 * @see feathers.controls.Button
+		 * @see #offTrackProperties
+		 */
+		public function get offTrackFactory():Function
+		{
+			return this._offTrackFactory;
+		}
+
+		/**
+		 * @private
+		 */
+		public function set offTrackFactory(value:Function):void
+		{
+			if(this._offTrackFactory == value)
+			{
+				return;
+			}
+			this._offTrackFactory = value;
+			this.invalidate(INVALIDATION_FLAG_OFF_TRACK_FACTORY);
+		}
+
+		/**
+		 * @private
+		 */
+		protected var _customOffTrackName:String;
+
+		/**
+		 * A name to add to the toggle switch's off track sub-component. Typically
+		 * used by a theme to provide different skins to different toggle switches.
+		 *
+		 * <p>In the following example, a custom off track name is passed to the
+		 * toggle switch:</p>
+		 *
+		 * <listing version="3.0">
+		 * toggle.customOnTrackName = "my-custom-off-track";</listing>
+		 *
+		 * <p>In your theme, you can target this sub-component name to provide
+		 * different skins than the default style:</p>
+		 *
+		 * <listing version="3.0">
+		 * setInitializerForClass( Button, customOffTrackInitializer, "my-custom-off-track");</listing>
+		 *
+		 * @see #DEFAULT_CHILD_NAME_OFF_TRACK
+		 * @see feathers.core.FeathersControl#nameList
+		 * @see feathers.core.DisplayListWatcher
+		 * @see #offTrackFactory
+		 * @see #offTrackProperties
+		 */
+		public function get customOffTrackName():String
+		{
+			return this._customOffTrackName;
+		}
+
+		/**
+		 * @private
+		 */
+		public function set customOffTrackName(value:String):void
+		{
+			if(this._customOffTrackName == value)
+			{
+				return;
+			}
+			this._customOffTrackName = value;
+			this.invalidate(INVALIDATION_FLAG_OFF_TRACK_FACTORY);
+		}
+
+		/**
+		 * @private
+		 */
 		protected var _offTrackProperties:PropertyProxy;
 
 		/**
@@ -809,8 +1281,19 @@ package feathers.controls
 		 * which is in a <code>Scroller</code> which is in a <code>List</code>,
 		 * you can use the following syntax:</p>
 		 * <pre>list.scrollerProperties.&#64;verticalScrollBarProperties.&#64;thumbProperties.defaultSkin = new Image(texture);</pre>
+		 *
+		 * <p>Setting properties in a <code>offTrackFactory</code> function
+		 * instead of using <code>offTrackProperties</code> will result in
+		 * better performance.</p>
+		 *
+		 * <p>In the following example, the toggle switch's off track properties
+		 * are updated:</p>
+		 *
+		 * <listing version="3.0">
+		 * toggle.offTrackProperties.defaultSkin = new Image( texture );</listing>
 		 * 
 		 * @see feathers.controls.Button
+		 * @see #offTrackFactory
 		 */
 		public function get offTrackProperties():Object
 		{
@@ -858,6 +1341,97 @@ package feathers.controls
 		/**
 		 * @private
 		 */
+		protected var _thumbFactory:Function;
+
+		/**
+		 * A function used to generate the toggle switch's thumb sub-component.
+		 * This can be used to change properties on the thumb when it is first
+		 * created. For instance, if you are skinning Feathers components
+		 * without a theme, you might use <code>thumbFactory</code> to set
+		 * skins and text styles on the thumb.
+		 *
+		 * <p>The function should have the following signature:</p>
+		 * <pre>function():Button</pre>
+		 *
+		 * <p>In the following example, a custom thumb factory is passed to the
+		 * toggle switch:</p>
+		 *
+		 * <listing version="3.0">
+		 * toggle.thumbFactory = function():Button
+		 * {
+		 *     var button:Button = new Button();
+		 *     button.defaultSkin = new Image( texture );
+		 *     return button;
+		 * };</listing>
+		 *
+		 * @see #thumbProperties
+		 */
+		public function get thumbFactory():Function
+		{
+			return this._thumbFactory;
+		}
+
+		/**
+		 * @private
+		 */
+		public function set thumbFactory(value:Function):void
+		{
+			if(this._thumbFactory == value)
+			{
+				return;
+			}
+			this._thumbFactory = value;
+			this.invalidate(INVALIDATION_FLAG_THUMB_FACTORY);
+		}
+
+		/**
+		 * @private
+		 */
+		protected var _customThumbName:String;
+
+		/**
+		 * A name to add to the toggle switch's thumb sub-component. Typically
+		 * used by a theme to provide different skins to different toggle switches.
+		 *
+		 * <p>In the following example, a custom thumb name is passed to the
+		 * toggle switch:</p>
+		 *
+		 * <listing version="3.0">
+		 * toggle.customThumbName = "my-custom-thumb";</listing>
+		 *
+		 * <p>In your theme, you can target this sub-component name to provide
+		 * different skins than the default style:</p>
+		 *
+		 * <listing version="3.0">
+		 * setInitializerForClass( Button, customThumbInitializer, "my-custom-thumb");</listing>
+		 *
+		 * @see #DEFAULT_CHILD_NAME_THUMB
+		 * @see feathers.core.FeathersControl#nameList
+		 * @see feathers.core.DisplayListWatcher
+		 * @see #thumbFactory
+		 * @see #thumbProperties
+		 */
+		public function get customThumbName():String
+		{
+			return this._customThumbName;
+		}
+
+		/**
+		 * @private
+		 */
+		public function set customThumbName(value:String):void
+		{
+			if(this._customThumbName == value)
+			{
+				return;
+			}
+			this._customThumbName = value;
+			this.invalidate(INVALIDATION_FLAG_THUMB_FACTORY);
+		}
+
+		/**
+		 * @private
+		 */
 		protected var _thumbProperties:PropertyProxy;
 
 		/**
@@ -871,8 +1445,19 @@ package feathers.controls
 		 * which is in a <code>Scroller</code> which is in a <code>List</code>,
 		 * you can use the following syntax:</p>
 		 * <pre>list.scrollerProperties.&#64;verticalScrollBarProperties.&#64;thumbProperties.defaultSkin = new Image(texture);</pre>
+		 *
+		 * <p>Setting properties in a <code>thumbFactory</code> function instead
+		 * of using <code>thumbProperties</code> will result in better
+		 * performance.</p>
+		 *
+		 * <p>In the following example, the toggle switch's thumb properties
+		 * are updated:</p>
+		 *
+		 * <listing version="3.0">
+		 * toggle.thumbProperties.defaultSkin = new Image( texture );</listing>
 		 * 
 		 * @see feathers.controls.Button
+		 * @see #thumbFactory
 		 */
 		public function get thumbProperties():Object
 		{
@@ -920,74 +1505,82 @@ package feathers.controls
 		/**
 		 * @private
 		 */
-		override protected function initialize():void
-		{
-			if(!this.onTrack)
-			{
-				this.onTrack = new Button();
-				this.onTrack.nameList.add(this.onTrackName);
-				this.onTrack.label = "";
-				this.onTrack.keepDownStateOnRollOut = true;
-				this.addChild(this.onTrack);
-			}
-
-			if(!this.thumb)
-			{
-				this.thumb = new Button();
-				this.thumb.nameList.add(this.thumbName);
-				this.thumb.label = "";
-				this.thumb.keepDownStateOnRollOut = true;
-				this.thumb.addEventListener(TouchEvent.TOUCH, thumb_touchHandler);
-				this.addChild(this.thumb);
-			}
-		}
-
-		/**
-		 * @private
-		 */
 		override protected function draw():void
 		{
 			const selectionInvalid:Boolean = this.isInvalid(INVALIDATION_FLAG_SELECTED);
 			const stylesInvalid:Boolean = this.isInvalid(INVALIDATION_FLAG_STYLES);
 			var sizeInvalid:Boolean = this.isInvalid(INVALIDATION_FLAG_SIZE);
 			const stateInvalid:Boolean = this.isInvalid(INVALIDATION_FLAG_STATE);
+			const focusInvalid:Boolean = this.isInvalid(INVALIDATION_FLAG_FOCUS);
 			const textRendererInvalid:Boolean = this.isInvalid(INVALIDATION_FLAG_TEXT_RENDERER);
+			const thumbFactoryInvalid:Boolean = this.isInvalid(INVALIDATION_FLAG_THUMB_FACTORY);
+			const onTrackFactoryInvalid:Boolean = this.isInvalid(INVALIDATION_FLAG_ON_TRACK_FACTORY);
+			const offTrackFactoryInvalid:Boolean = this.isInvalid(INVALIDATION_FLAG_OFF_TRACK_FACTORY);
+
+			if(thumbFactoryInvalid)
+			{
+				this.createThumb();
+			}
+
+			if(onTrackFactoryInvalid)
+			{
+				this.createOnTrack();
+			}
+
+			this.createOrDestroyOffTrackIfNeeded(offTrackFactoryInvalid);
 
 			if(textRendererInvalid)
 			{
 				this.createLabels();
 			}
 
-			this.createOrDestroyOffTrackIfNeeded();
-
 			if(stylesInvalid)
 			{
 				this.refreshOnLabelStyles();
 				this.refreshOffLabelStyles();
-				this.refreshThumbStyles();
-				this.refreshTrackStyles();
 			}
 
-			if(stateInvalid)
+			if(thumbFactoryInvalid || stylesInvalid)
 			{
-				this.thumb.isEnabled = this.onTrack.isEnabled = this._isEnabled;
-				if(this.offTrack)
-				{
-					this.offTrack.isEnabled = this._isEnabled;
-				}
+				this.refreshThumbStyles();
+			}
+			if(onTrackFactoryInvalid || stylesInvalid)
+			{
+				this.refreshOnTrackStyles();
+			}
+			if((offTrackFactoryInvalid || stylesInvalid) && this.offTrack)
+			{
+				this.refreshOffTrackStyles();
+			}
+
+			if(thumbFactoryInvalid || stateInvalid)
+			{
+				this.thumb.isEnabled = this._isEnabled;
+			}
+			if(onTrackFactoryInvalid || stateInvalid)
+			{
+				this.onTrack.isEnabled = this._isEnabled;
+			}
+			if((offTrackFactoryInvalid || stateInvalid) && this.offTrack)
+			{
+				this.offTrack.isEnabled = this._isEnabled;
 			}
 
 			sizeInvalid = this.autoSizeIfNeeded() || sizeInvalid;
 
-			if(stylesInvalid || sizeInvalid || stateInvalid)
-			{
-				this.thumb.y = (this.actualHeight - this.thumb.height) / 2;
-				this.drawLabels();
-			}
-
 			if(sizeInvalid || stylesInvalid || selectionInvalid)
 			{
 				this.updateSelection();
+			}
+
+			if(stylesInvalid || sizeInvalid || stateInvalid || selectionInvalid)
+			{
+				this.layoutChildren();
+			}
+
+			if(sizeInvalid || focusInvalid)
+			{
+				this.refreshFocusIndicator();
 			}
 		}
 
@@ -1049,6 +1642,75 @@ package feathers.controls
 		/**
 		 * @private
 		 */
+		protected function createThumb():void
+		{
+			if(this.thumb)
+			{
+				this.thumb.removeFromParent(true);
+				this.thumb = null;
+			}
+
+			const factory:Function = this._thumbFactory != null ? this._thumbFactory : defaultThumbFactory;
+			const thumbName:String = this._customThumbName != null ? this._customThumbName : this.thumbName;
+			this.thumb = Button(factory());
+			this.thumb.nameList.add(thumbName);
+			this.thumb.keepDownStateOnRollOut = true;
+			this.thumb.addEventListener(TouchEvent.TOUCH, thumb_touchHandler);
+			this.addChild(this.thumb);
+		}
+
+		/**
+		 * @private
+		 */
+		protected function createOnTrack():void
+		{
+			if(this.onTrack)
+			{
+				this.onTrack.removeFromParent(true);
+				this.onTrack = null;
+			}
+
+			const factory:Function = this._onTrackFactory != null ? this._onTrackFactory : defaultOnTrackFactory;
+			const onTrackName:String = this._customOnTrackName != null ? this._customOnTrackName : this.onTrackName;
+			this.onTrack = Button(factory());
+			this.onTrack.nameList.add(onTrackName);
+			this.onTrack.keepDownStateOnRollOut = true;
+			this.addChildAt(this.onTrack, 0);
+		}
+
+		/**
+		 * @private
+		 */
+		protected function createOrDestroyOffTrackIfNeeded(offTrackFactoryInvalid:Boolean):void
+		{
+			if(this._trackLayoutMode == TRACK_LAYOUT_MODE_ON_OFF)
+			{
+				if(!offTrackFactoryInvalid)
+				{
+					return;
+				}
+				if(this.offTrack)
+				{
+					this.offTrack.removeFromParent(true);
+					this.offTrack = null;
+				}
+				const factory:Function = this._offTrackFactory != null ? this._offTrackFactory : defaultOffTrackFactory;
+				const offTrackName:String = this._customOffTrackName != null ? this._customOffTrackName : this.offTrackName;
+				this.offTrack = Button(factory());
+				this.offTrack.nameList.add(offTrackName);
+				this.offTrack.keepDownStateOnRollOut = true;
+				this.addChildAt(this.offTrack, 1);
+			}
+			else if(this.offTrack) //single
+			{
+				this.offTrack.removeFromParent(true);
+				this.offTrack = null;
+			}
+		}
+
+		/**
+		 * @private
+		 */
 		protected function createLabels():void
 		{
 			if(this.offTextRenderer)
@@ -1084,8 +1746,91 @@ package feathers.controls
 		/**
 		 * @private
 		 */
+		protected function layoutChildren():void
+		{
+			this.thumb.validate();
+			this.thumb.y = (this.actualHeight - this.thumb.height) / 2;
+
+			const maxLabelWidth:Number = Math.max(0, this.actualWidth - this.thumb.width - this._paddingLeft - this._paddingRight);
+			var totalLabelHeight:Number = Math.max(this.onTextRenderer.height, this.offTextRenderer.height);
+			var labelHeight:Number;
+			if(this._labelAlign == LABEL_ALIGN_MIDDLE)
+			{
+				labelHeight = totalLabelHeight;
+			}
+			else //baseline
+			{
+				labelHeight = Math.max(this.onTextRenderer.baseline, this.offTextRenderer.baseline);
+			}
+
+			if(this.onTextRenderer is FeathersControl)
+			{
+				var clipRect:Rectangle = FeathersControl(this.onTextRenderer).clipRect;
+				clipRect.width = maxLabelWidth;
+				clipRect.height = totalLabelHeight;
+				FeathersControl(this.onTextRenderer).clipRect = clipRect;
+			}
+
+			this.onTextRenderer.y = (this.actualHeight - labelHeight) / 2;
+
+			if(this.offTextRenderer is FeathersControl)
+			{
+				clipRect = FeathersControl(this.offTextRenderer).clipRect;
+				clipRect.width = maxLabelWidth;
+				clipRect.height = totalLabelHeight;
+				FeathersControl(this.offTextRenderer).clipRect = clipRect;
+			}
+
+			this.offTextRenderer.y = (this.actualHeight - labelHeight) / 2;
+
+			this.layoutTracks();
+		}
+
+		/**
+		 * @private
+		 */
+		protected function layoutTracks():void
+		{
+			const maxLabelWidth:Number = Math.max(0, this.actualWidth - this.thumb.width - this._paddingLeft - this._paddingRight);
+			const thumbOffset:Number = this.thumb.x - this._paddingLeft;
+
+			var onScrollOffset:Number = maxLabelWidth - thumbOffset - (maxLabelWidth - this.onTextRenderer.width) / 2;
+			if(this.onTextRenderer is FeathersControl)
+			{
+				const displayOnLabelRenderer:FeathersControl = FeathersControl(this.onTextRenderer);
+				var currentClipRect:Rectangle = displayOnLabelRenderer.clipRect;
+				currentClipRect.x = onScrollOffset
+				displayOnLabelRenderer.clipRect = currentClipRect;
+			}
+			this.onTextRenderer.x = this._paddingLeft - onScrollOffset;
+
+			var offScrollOffset:Number = -thumbOffset - (maxLabelWidth - this.offTextRenderer.width) / 2;
+			if(this.offTextRenderer is FeathersControl)
+			{
+				const displayOffLabelRenderer:FeathersControl = FeathersControl(this.offTextRenderer);
+				currentClipRect = displayOffLabelRenderer.clipRect;
+				currentClipRect.x = offScrollOffset
+				displayOffLabelRenderer.clipRect = currentClipRect;
+			}
+			this.offTextRenderer.x = this.actualWidth - this._paddingRight - maxLabelWidth - offScrollOffset;
+
+			if(this._trackLayoutMode == TRACK_LAYOUT_MODE_ON_OFF)
+			{
+				this.layoutTrackWithOnOff();
+			}
+			else
+			{
+				this.layoutTrackWithSingle();
+			}
+		}
+
+		/**
+		 * @private
+		 */
 		protected function updateSelection():void
 		{
+			this.thumb.validate();
+
 			var xPosition:Number = this._paddingLeft;
 			if(this._isSelected)
 			{
@@ -1112,12 +1857,6 @@ package feathers.controls
 				this.thumb.x = xPosition;
 			}
 			this._isSelectionChangedByUser = false;
-
-			//we want to be sure that the onLabel isn't visible behind the thumb
-			//on init so that if we fade out the toggle switch alpha, on won't
-			//suddenly appear due to the way that flash changes alpha values
-			//of containers.
-			this.layout();
 		}
 
 		/**
@@ -1225,7 +1964,7 @@ package feathers.controls
 		/**
 		 * @private
 		 */
-		protected function refreshTrackStyles():void
+		protected function refreshOnTrackStyles():void
 		{
 			for(var propertyName:String in this._onTrackProperties)
 			{
@@ -1235,92 +1974,24 @@ package feathers.controls
 					this.onTrack[propertyName] = propertyValue;
 				}
 			}
-			if(this.offTrack)
+		}
+
+		/**
+		 * @private
+		 */
+		protected function refreshOffTrackStyles():void
+		{
+			if(!this.offTrack)
 			{
-				for(propertyName in this._offTrackProperties)
+				return;
+			}
+			for(var propertyName:String in this._offTrackProperties)
+			{
+				if(this.offTrack.hasOwnProperty(propertyName))
 				{
-					if(this.offTrack.hasOwnProperty(propertyName))
-					{
-						propertyValue = this._offTrackProperties[propertyName];
-						this.offTrack[propertyName] = propertyValue;
-					}
+					var propertyValue:Object = this._offTrackProperties[propertyName];
+					this.offTrack[propertyName] = propertyValue;
 				}
-			}
-		}
-
-		/**
-		 * @private
-		 */
-		protected function drawLabels():void
-		{
-			const maxLabelWidth:Number = Math.max(0, this.actualWidth - this.thumb.width - this._paddingLeft - this._paddingRight);
-			var totalLabelHeight:Number = Math.max(this.onTextRenderer.height, this.offTextRenderer.height);
-			var labelHeight:Number;
-			if(this._labelAlign == LABEL_ALIGN_MIDDLE)
-			{
-				labelHeight = totalLabelHeight;
-			}
-			else //baseline
-			{
-				labelHeight = Math.max(this.onTextRenderer.baseline, this.offTextRenderer.baseline);
-			}
-
-			if(this.onTextRenderer is FeathersControl)
-			{
-				var clipRect:Rectangle = FeathersControl(this.onTextRenderer).clipRect;
-				clipRect.width = maxLabelWidth;
-				clipRect.height = totalLabelHeight;
-				FeathersControl(this.onTextRenderer).clipRect = clipRect;
-			}
-
-			this.onTextRenderer.y = (this.actualHeight - labelHeight) / 2;
-
-			if(this.offTextRenderer is FeathersControl)
-			{
-				clipRect = FeathersControl(this.offTextRenderer).clipRect;
-				clipRect.width = maxLabelWidth;
-				clipRect.height = totalLabelHeight;
-				FeathersControl(this.offTextRenderer).clipRect = clipRect;
-			}
-
-			this.offTextRenderer.y = (this.actualHeight - labelHeight) / 2;
-		}
-
-		/**
-		 * @private
-		 */
-		protected function layout():void
-		{
-			const maxLabelWidth:Number = Math.max(0, this.actualWidth - this.thumb.width - this._paddingLeft - this._paddingRight);
-			const thumbOffset:Number = this.thumb.x - this._paddingLeft;
-
-			var onScrollOffset:Number = maxLabelWidth - thumbOffset - (maxLabelWidth - this.onTextRenderer.width) / 2;
-			if(this.onTextRenderer is FeathersControl)
-			{
-				const displayOnLabelRenderer:FeathersControl = FeathersControl(this.onTextRenderer);
-				var currentClipRect:Rectangle = displayOnLabelRenderer.clipRect;
-				currentClipRect.x = onScrollOffset
-				displayOnLabelRenderer.clipRect = currentClipRect;
-			}
-			this.onTextRenderer.x = this._paddingLeft - onScrollOffset;
-
-			var offScrollOffset:Number = -thumbOffset - (maxLabelWidth - this.offTextRenderer.width) / 2;
-			if(this.offTextRenderer is FeathersControl)
-			{
-				const displayOffLabelRenderer:FeathersControl = FeathersControl(this.offTextRenderer);
-				currentClipRect = displayOffLabelRenderer.clipRect;
-				currentClipRect.x = offScrollOffset
-				displayOffLabelRenderer.clipRect = currentClipRect;
-			}
-			this.offTextRenderer.x = this.actualWidth - this._paddingRight - maxLabelWidth - offScrollOffset;
-
-			if(this._trackLayoutMode == TRACK_LAYOUT_MODE_ON_OFF)
-			{
-				this.layoutTrackWithOnOff();
-			}
-			else
-			{
-				this.layoutTrackWithSingle();
 			}
 		}
 
@@ -1333,11 +2004,15 @@ package feathers.controls
 			this.onTrack.y = 0;
 			this.onTrack.width = this.thumb.x + this.thumb.width / 2;
 			this.onTrack.height = this.actualHeight;
+			//validation is required for the toggle tween. otherwise the tracks
+			//don't appear correctly until the next frame.
+			this.onTrack.validate();
 
 			this.offTrack.x = this.onTrack.width;
 			this.offTrack.y = 0;
 			this.offTrack.width = this.actualWidth - this.offTrack.x;
 			this.offTrack.height = this.actualHeight;
+			this.offTrack.validate();
 		}
 
 		/**
@@ -1354,29 +2029,6 @@ package feathers.controls
 		/**
 		 * @private
 		 */
-		protected function createOrDestroyOffTrackIfNeeded():void
-		{
-			if(this._trackLayoutMode == TRACK_LAYOUT_MODE_ON_OFF)
-			{
-				if(!this.offTrack)
-				{
-					this.offTrack = new Button();
-					this.offTrack.nameList.add(this.offTrackName);
-					this.offTrack.label = "";
-					this.offTrack.keepDownStateOnRollOut = true;
-					this.addChildAt(this.offTrack, 1);
-				}
-			}
-			else if(this.offTrack) //single
-			{
-				this.offTrack.removeFromParent(true);
-				this.offTrack = null;
-			}
-		}
-
-		/**
-		 * @private
-		 */
 		protected function childProperties_onChange(proxy:PropertyProxy, name:Object):void
 		{
 			this.invalidate(INVALIDATION_FLAG_STYLES);
@@ -1385,7 +2037,7 @@ package feathers.controls
 		/**
 		 * @private
 		 */
-		protected function removedFromStageHandler(event:Event):void
+		protected function toggleSwitch_removedFromStageHandler(event:Event):void
 		{
 			this._touchPointID = -1;
 		}
@@ -1393,7 +2045,27 @@ package feathers.controls
 		/**
 		 * @private
 		 */
-		protected function touchHandler(event:TouchEvent):void
+		override protected function focusInHandler(event:Event):void
+		{
+			super.focusInHandler(event);
+			this.stage.addEventListener(KeyboardEvent.KEY_DOWN, stage_keyDownHandler);
+			this.stage.addEventListener(KeyboardEvent.KEY_UP, stage_keyUpHandler);
+		}
+
+		/**
+		 * @private
+		 */
+		override protected function focusOutHandler(event:Event):void
+		{
+			super.focusOutHandler(event);
+			this.stage.removeEventListener(KeyboardEvent.KEY_DOWN, stage_keyDownHandler);
+			this.stage.removeEventListener(KeyboardEvent.KEY_UP, stage_keyUpHandler);
+		}
+
+		/**
+		 * @private
+		 */
+		protected function toggleSwitch_touchHandler(event:TouchEvent):void
 		{
 			if(this._ignoreTapHandler)
 			{
@@ -1428,8 +2100,8 @@ package feathers.controls
 			}
 
 			this._touchPointID = -1;
-			touch.getLocation(this, HELPER_POINT);
-			if(this.hitTest(HELPER_POINT, true))
+			touch.getLocation(this.stage, HELPER_POINT);
+			if(this.contains(this.stage.hitTest(HELPER_POINT, true)))
 			{
 				this.isSelected = !this._isSelected;
 				this._isSelectionChangedByUser = true;
@@ -1474,7 +2146,7 @@ package feathers.controls
 					const xOffset:Number = HELPER_POINT.x - this._touchStartX;
 					const xPosition:Number = Math.min(Math.max(this._paddingLeft, this._thumbStartX + xOffset), this._paddingLeft + trackScrollableWidth);
 					this.thumb.x = xPosition;
-					this.layout();
+					this.layoutTracks();
 				}
 				else if(touch.phase == TouchPhase.ENDED)
 				{
@@ -1508,9 +2180,38 @@ package feathers.controls
 		/**
 		 * @private
 		 */
+		protected function stage_keyDownHandler(event:KeyboardEvent):void
+		{
+			if(event.keyCode == Keyboard.ESCAPE)
+			{
+				this._touchPointID = -1;
+			}
+			if(this._touchPointID >= 0 || event.keyCode != Keyboard.SPACE)
+			{
+				return;
+			}
+			this._touchPointID = int.MAX_VALUE;
+		}
+
+		/**
+		 * @private
+		 */
+		protected function stage_keyUpHandler(event:KeyboardEvent):void
+		{
+			if(this._touchPointID != int.MAX_VALUE || event.keyCode != Keyboard.SPACE)
+			{
+				return;
+			}
+			this._touchPointID = -1;
+			this.isSelected = !this._isSelected;
+		}
+
+		/**
+		 * @private
+		 */
 		protected function selectionTween_onUpdate():void
 		{
-			this.layout();
+			this.layoutTracks();
 		}
 
 		/**

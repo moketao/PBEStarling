@@ -11,6 +11,7 @@ package feathers.controls.supportClasses
 	import feathers.core.IFeathersControl;
 	import feathers.events.FeathersEventType;
 	import feathers.layout.ILayout;
+	import feathers.layout.ILayoutDisplayObject;
 	import feathers.layout.IVirtualLayout;
 	import feathers.layout.LayoutBoundsResult;
 	import feathers.layout.ViewPortBounds;
@@ -19,7 +20,6 @@ package feathers.controls.supportClasses
 
 	import starling.display.DisplayObject;
 	import starling.events.Event;
-	import starling.events.EventDispatcher;
 
 	/**
 	 * @private
@@ -157,12 +157,12 @@ package feathers.controls.supportClasses
 
 		public function get horizontalScrollStep():Number
 		{
-			return this._visibleWidth / 10;
+			return Math.min(this.actualWidth, this.actualHeight) / 10;
 		}
 
 		public function get verticalScrollStep():Number
 		{
-			return this._visibleHeight / 10;
+			return Math.min(this.actualWidth, this.actualHeight) / 10;
 		}
 
 		private var _horizontalScrollPosition:Number = 0;
@@ -174,7 +174,12 @@ package feathers.controls.supportClasses
 
 		public function set horizontalScrollPosition(value:Number):void
 		{
+			if(this._horizontalScrollPosition == value)
+			{
+				return;
+			}
 			this._horizontalScrollPosition = value;
+			this.invalidate(INVALIDATION_FLAG_SCROLL);
 		}
 
 		private var _verticalScrollPosition:Number = 0;
@@ -186,10 +191,15 @@ package feathers.controls.supportClasses
 
 		public function set verticalScrollPosition(value:Number):void
 		{
+			if(this._verticalScrollPosition == value)
+			{
+				return;
+			}
 			this._verticalScrollPosition = value;
+			this.invalidate(INVALIDATION_FLAG_SCROLL);
 		}
 
-		private var _ignoreChildResizing:Boolean = false;
+		private var _ignoreChildChanges:Boolean = false;
 
 		private var items:Vector.<DisplayObject> = new <DisplayObject>[];
 
@@ -208,7 +218,7 @@ package feathers.controls.supportClasses
 			}
 			if(this._layout)
 			{
-				EventDispatcher(this._layout).removeEventListener(Event.CHANGE, layout_changeHandler);
+				this._layout.removeEventListener(Event.CHANGE, layout_changeHandler);
 			}
 			this._layout = value;
 			if(this._layout)
@@ -217,7 +227,7 @@ package feathers.controls.supportClasses
 				{
 					IVirtualLayout(this._layout).useVirtualLayout = false;
 				}
-				EventDispatcher(this._layout).addEventListener(Event.CHANGE, layout_changeHandler);
+				this._layout.addEventListener(Event.CHANGE, layout_changeHandler);
 				//if we don't have a layout, nothing will need to be redrawn
 				this.invalidate(INVALIDATION_FLAG_DATA);
 			}
@@ -229,6 +239,10 @@ package feathers.controls.supportClasses
 			{
 				child.addEventListener(FeathersEventType.RESIZE, child_resizeHandler);
 			}
+			if(child is ILayoutDisplayObject)
+			{
+				child.addEventListener(FeathersEventType.LAYOUT_DATA_CHANGE, child_layoutDataChangeHandler);
+			}
 			return super.addChildAt(child, index);
 		}
 
@@ -239,15 +253,16 @@ package feathers.controls.supportClasses
 			{
 				child.removeEventListener(FeathersEventType.RESIZE, child_resizeHandler);
 			}
+			if(child is ILayoutDisplayObject)
+			{
+				child.removeEventListener(FeathersEventType.LAYOUT_DATA_CHANGE, child_layoutDataChangeHandler);
+			}
 			return child;
 		}
 
 		override public function dispose():void
 		{
-			if(this._layout)
-			{
-				EventDispatcher(this._layout).removeEventListener(Event.CHANGE, layout_changeHandler);
-			}
+			this.layout = null;
 			super.dispose();
 		}
 
@@ -255,20 +270,13 @@ package feathers.controls.supportClasses
 		{
 			const dataInvalid:Boolean = this.isInvalid(INVALIDATION_FLAG_DATA);
 			const sizeInvalid:Boolean = this.isInvalid(INVALIDATION_FLAG_SIZE);
+			const scrollInvalid:Boolean = this.isInvalid(INVALIDATION_FLAG_SCROLL);
 
-			if(sizeInvalid || dataInvalid)
+			if(sizeInvalid || dataInvalid || scrollInvalid)
 			{
-				const itemCount:int = this.items.length;
-				for(var i:int = 0; i < itemCount; i++)
-				{
-					var control:IFeathersControl = this.items[i] as IFeathersControl;
-					if(control)
-					{
-						control.validate();
-					}
-				}
-
 				HELPER_BOUNDS.x = HELPER_BOUNDS.y = 0;
+				HELPER_BOUNDS.scrollX = this._horizontalScrollPosition;
+				HELPER_BOUNDS.scrollY = this._verticalScrollPosition;
 				HELPER_BOUNDS.explicitWidth = this._visibleWidth;
 				HELPER_BOUNDS.explicitHeight = this._visibleHeight;
 				HELPER_BOUNDS.minWidth = this._minVisibleWidth;
@@ -277,13 +285,24 @@ package feathers.controls.supportClasses
 				HELPER_BOUNDS.maxHeight = this._maxVisibleHeight;
 				if(this._layout)
 				{
-					this._ignoreChildResizing = true;
+					this._ignoreChildChanges = true;
 					this._layout.layout(this.items, HELPER_BOUNDS, HELPER_LAYOUT_RESULT);
-					this._ignoreChildResizing = false;
+					this._ignoreChildChanges = false;
 					this.setSizeInternal(HELPER_LAYOUT_RESULT.contentWidth, HELPER_LAYOUT_RESULT.contentHeight, false);
 				}
 				else
 				{
+					this._ignoreChildChanges = true;
+					const itemCount:int = this.items.length;
+					for(var i:int = 0; i < itemCount; i++)
+					{
+						var control:IFeathersControl = this.items[i] as IFeathersControl;
+						if(control)
+						{
+							control.validate();
+						}
+					}
+					this._ignoreChildChanges = false;
 					var maxX:Number = isNaN(HELPER_BOUNDS.explicitWidth) ? 0 : HELPER_BOUNDS.explicitWidth;
 					var maxY:Number = isNaN(HELPER_BOUNDS.explicitHeight) ? 0 : HELPER_BOUNDS.explicitHeight;
 					for each(var item:DisplayObject in this.items)
@@ -305,7 +324,16 @@ package feathers.controls.supportClasses
 
 		private function child_resizeHandler(event:Event):void
 		{
-			if(this._ignoreChildResizing)
+			if(this._ignoreChildChanges)
+			{
+				return;
+			}
+			this.invalidate(INVALIDATION_FLAG_DATA);
+		}
+
+		private function child_layoutDataChangeHandler(event:Event):void
+		{
+			if(this._ignoreChildChanges)
 			{
 				return;
 			}

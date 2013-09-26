@@ -49,6 +49,22 @@ package feathers.controls
 	/**
 	 * Displays an image, either from a <code>Texture</code> or loaded from a
 	 * URL.
+	 *
+	 * <p>The following example passes a URL to an image loader and listens for
+	 * its complete event:</p>
+	 *
+	 * <listing version="3.0">
+	 * var loader:ImageLoader = new ImageLoader();
+	 * loader.source = "http://example.com/example.png";
+	 * loader.addEventListener( Event.COMPLETE, loader_completeHandler );
+	 * this.addChild( loader );</listing>
+	 *
+	 * <p>The following example passes a texture to an image loader:</p>
+	 *
+	 * <listing version="3.0">
+	 * var loader:ImageLoader = new ImageLoader();
+	 * loader.source = Texture.fromBitmap( bitmap );
+	 * this.addChild( loader );</listing>
 	 */
 	public class ImageLoader extends FeathersControl
 	{
@@ -124,7 +140,23 @@ package feathers.controls
 
 		/**
 		 * The texture to display, or a URL to load the image from to create the
-		 * texture.
+		 * texture. Supports image files that may be loaded by
+		 * <code>flash.display.Loader</code>, including JPG, GIF, and PNG.
+		 *
+		 * <p>In the following example, the image loader's source is set to a
+		 * texture:</p>
+		 *
+		 * <listing version="3.0">
+		 * loader.source = Texture.fromBitmap( bitmap );</listing>
+		 *
+		 * <p>In the following example, the image loader's source is set to the
+		 * URL of an image:</p>
+		 *
+		 * <listing version="3.0">
+		 * loader.source = "http://example.com/example.png";</listing>
+		 *
+		 * @see http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/display/Loader.html
+		 * @default null
 		 */
 		public function get source():Object
 		{
@@ -158,6 +190,15 @@ package feathers.controls
 
 		/**
 		 * Indicates if the source has fully loaded.
+		 *
+		 * <p>In the following example, we check if the image loader's source
+		 * has finished loading:</p>
+		 *
+		 * <listing version="3.0">
+		 * if( loader.isLoaded )
+		 * {
+		 *     //do something
+		 * }</listing>
 		 */
 		public function get isLoaded():Boolean
 		{
@@ -170,7 +211,14 @@ package feathers.controls
 		private var _textureScale:Number = 1;
 
 		/**
-		 * The scale of the texture.
+		 * The scale of the texture. Useful for UI that scales to DPI.
+		 *
+		 * <p>In the following example, the image loader's texture scale is
+		 * customized:</p>
+		 *
+		 * <listing version="3.0">
+		 * loader.textureScale = 0.5;</listing>
+		 * @default 1
 		 */
 		public function get textureScale():Number
 		{
@@ -198,8 +246,15 @@ package feathers.controls
 		/**
 		 * The smoothing value to use on the internal <code>Image</code>.
 		 *
+		 * <p>In the following example, the image loader's smoothing is set to a
+		 * custom value:</p>
+		 *
+		 * <listing version="3.0">
+		 * loader.source = TextureSmoothing.NONE;</listing>
+		 *
 		 * @see starling.textures.TextureSmoothing
 		 * @see starling.display.Image#smoothing
+		 * @default TextureSmoothing.BILINEAR
 		 */
 		public function get smoothing():String
 		{
@@ -227,7 +282,14 @@ package feathers.controls
 		/**
 		 * The tint value to use on the internal <code>Image</code>.
 		 *
+		 * <p>In the following example, the image loader's texture color is
+		 * customized:</p>
+		 *
+		 * <listing version="3.0">
+		 * loader.color = 0xff00ff;</listing>
+		 *
 		 * @see starling.display.Image#color
+		 * @default 0xffffff
 		 */
 		public function get color():uint
 		{
@@ -255,6 +317,14 @@ package feathers.controls
 		/**
 		 * Determines if the image should be snapped to the nearest global whole
 		 * pixel when rendered. Turning this on helps to avoid blurring.
+		 *
+		 * <p>In the following example, the image loader's position is snapped
+		 * to pixels:</p>
+		 *
+		 * <listing version="3.0">
+		 * loader.snapToPixels = true;</listing>
+		 *
+		 * @default false
 		 */
 		public function get snapToPixels():Boolean
 		{
@@ -281,6 +351,14 @@ package feathers.controls
 		/**
 		 * Determines if the aspect ratio of the texture is maintained when the
 		 * aspect ratio of the component is different.
+		 *
+		 * <p>In the following example, the image loader's aspect ratio is not
+		 * maintained:</p>
+		 *
+		 * <listing version="3.0">
+		 * loader.maintainAspectRatio = false;</listing>
+		 *
+		 * @default true
 		 */
 		public function get maintainAspectRatio():Boolean
 		{
@@ -298,6 +376,270 @@ package feathers.controls
 			}
 			this._maintainAspectRatio = value;
 			this.invalidate(INVALIDATION_FLAG_LAYOUT);
+		}
+
+		/**
+		 * The original width of the source content, in pixels. This value will
+		 * be <code>0</code> until the source content finishes loading. If the
+		 * source is a texture, this value will be <code>0</code> until the
+		 * <code>ImageLoader</code> validates.
+		 */
+		public function get originalSourceWidth():Number
+		{
+			if(this._textureFrame)
+			{
+				return this._textureFrame.width;
+			}
+			return 0;
+		}
+
+		/**
+		 * The original height of the source content, in pixels. This value will
+		 * be <code>0</code> until the source content finishes loading. If the
+		 * source is a texture, this value will be <code>0</code> until the
+		 * <code>ImageLoader</code> validates.
+		 */
+		public function get originalSourceHeight():Number
+		{
+			if(this._textureFrame)
+			{
+				return this._textureFrame.height;
+			}
+			return 0;
+		}
+
+		/**
+		 * @private
+		 */
+		protected var _pendingTexture:BitmapData;
+
+		/**
+		 * @private
+		 */
+		protected var _delayTextureCreation:Boolean = false;
+
+		/**
+		 * Determines if a loaded bitmap may be converted to a texture
+		 * immediately after loading. If <code>true</code>, the loaded bitmap
+		 * will be saved until this property is set to <code>false</code>, and
+		 * only then it will be used to create the texture.
+		 *
+		 * <p>This property is intended to be used while a parent container,
+		 * such as a <code>List</code>, is scrolling in order to keep scrolling
+		 * as smooth as possible. Creating textures is expensive and performance
+		 * can be affected by it. Set this property to <code>true</code> when
+		 * the <code>List</code> dispatches <code>FeathersEventType.SCROLL_START</code>
+		 * and set back to false when the <code>List</code> dispatches
+		 * <code>FeathersEventType.SCROLL_COMPLETE</code>. You may also need
+		 * to set to false if the <code>isScrolling</code> property of the
+		 * <code>List</code> is <code>true</code> before you listen to those
+		 * events.</p>
+		 *
+		 * <p>In the following example, the image loader's texture creation is
+		 * delayed:</p>
+		 *
+		 * <listing version="3.0">
+		 * loader.delayTextureCreation = true;</listing>
+		 *
+		 * @see feathers.controls.Scroller#event:scrollStart
+		 * @see feathers.controls.Scroller#event:scrollComplete
+		 * @see feathers.controls.Scroller#isScrolling
+		 */
+		public function get delayTextureCreation():Boolean
+		{
+			return this._delayTextureCreation;
+		}
+
+		/**
+		 * @private
+		 */
+		public function set delayTextureCreation(value:Boolean):void
+		{
+			if(this._delayTextureCreation == value)
+			{
+				return;
+			}
+			this._delayTextureCreation = value;
+			if(!this._delayTextureCreation && this._pendingTexture)
+			{
+				const bitmapData:BitmapData = this._pendingTexture;
+				this._pendingTexture = null;
+				this.replaceTexture(bitmapData);
+			}
+		}
+
+		/**
+		 * Quickly sets all padding properties to the same value. The
+		 * <code>padding</code> getter always returns the value of
+		 * <code>paddingTop</code>, but the other padding values may be
+		 * different.
+		 *
+		 * <p>In the following example, the image loader's padding is set to
+		 * 20 pixels on all sides:</p>
+		 *
+		 * <listing version="3.0">
+		 * loader.padding = 20;</listing>
+		 *
+		 * @default 0
+		 */
+		public function get padding():Number
+		{
+			return this._paddingTop;
+		}
+
+		/**
+		 * @private
+		 */
+		public function set padding(value:Number):void
+		{
+			this.paddingTop = value;
+			this.paddingRight = value;
+			this.paddingBottom = value;
+			this.paddingLeft = value;
+		}
+
+		/**
+		 * @private
+		 */
+		protected var _paddingTop:Number = 0;
+
+		/**
+		 * The minimum space, in pixels, between the control's top edge and the
+		 * control's content. Value may be negative to extend the content
+		 * outside the edges of the control. Useful for skinning.
+		 *
+		 * <p>In the following example, the image loader's top padding is set
+		 * to 20 pixels:</p>
+		 *
+		 * <listing version="3.0">
+		 * loader.paddingTop = 20;</listing>
+		 *
+		 * @default 0
+		 */
+		public function get paddingTop():Number
+		{
+			return this._paddingTop;
+		}
+
+		/**
+		 * @private
+		 */
+		public function set paddingTop(value:Number):void
+		{
+			if(this._paddingTop == value)
+			{
+				return;
+			}
+			this._paddingTop = value;
+			this.invalidate(INVALIDATION_FLAG_STYLES);
+		}
+
+		/**
+		 * @private
+		 */
+		protected var _paddingRight:Number = 0;
+
+		/**
+		 * The minimum space, in pixels, between the control's right edge and the
+		 * control's content. Value may be negative to extend the content
+		 * outside the edges of the control. Useful for skinning.
+		 *
+		 * <p>In the following example, the image loader's right padding is set
+		 * to 20 pixels:</p>
+		 *
+		 * <listing version="3.0">
+		 * loader.paddingRight = 20;</listing>
+		 *
+		 * @default 0
+		 */
+		public function get paddingRight():Number
+		{
+			return this._paddingRight;
+		}
+
+		/**
+		 * @private
+		 */
+		public function set paddingRight(value:Number):void
+		{
+			if(this._paddingRight == value)
+			{
+				return;
+			}
+			this._paddingRight = value;
+			this.invalidate(INVALIDATION_FLAG_STYLES);
+		}
+
+		/**
+		 * @private
+		 */
+		protected var _paddingBottom:Number = 0;
+
+		/**
+		 * The minimum space, in pixels, between the control's bottom edge and the
+		 * control's content. Value may be negative to extend the content
+		 * outside the edges of the control. Useful for skinning.
+		 *
+		 * <p>In the following example, the image loader's bottom padding is set
+		 * to 20 pixels:</p>
+		 *
+		 * <listing version="3.0">
+		 * loader.paddingBottom = 20;</listing>
+		 *
+		 * @default 0
+		 */
+		public function get paddingBottom():Number
+		{
+			return this._paddingBottom;
+		}
+
+		/**
+		 * @private
+		 */
+		public function set paddingBottom(value:Number):void
+		{
+			if(this._paddingBottom == value)
+			{
+				return;
+			}
+			this._paddingBottom = value;
+			this.invalidate(INVALIDATION_FLAG_STYLES);
+		}
+
+		/**
+		 * @private
+		 */
+		protected var _paddingLeft:Number = 0;
+
+		/**
+		 * The minimum space, in pixels, between the control's left edge and the
+		 * control's content. Value may be negative to extend the content
+		 * outside the edges of the control. Useful for skinning.
+		 *
+		 * <p>In the following example, the image loader's left padding is set
+		 * to 20 pixels:</p>
+		 *
+		 * <listing version="3.0">
+		 * loader.paddingLeft = 20;</listing>
+		 *
+		 * @default 0
+		 */
+		public function get paddingLeft():Number
+		{
+			return this._paddingLeft;
+		}
+
+		/**
+		 * @private
+		 */
+		public function set paddingLeft(value:Number):void
+		{
+			if(this._paddingLeft == value)
+			{
+				return;
+			}
+			this._paddingLeft = value;
+			this.invalidate(INVALIDATION_FLAG_STYLES);
 		}
 
 		/**
@@ -384,7 +726,7 @@ package feathers.controls
 			var newWidth:Number = this.explicitWidth;
 			if(needsWidth)
 			{
-				if(this._texture)
+				if(this._textureFrame)
 				{
 					newWidth = this._textureFrame.width * this._textureScale;
 					if(!needsHeight)
@@ -397,12 +739,13 @@ package feathers.controls
 				{
 					newWidth = 0;
 				}
+				newWidth += this._paddingLeft + this._paddingRight;
 			}
 
 			var newHeight:Number = this.explicitHeight;
 			if(needsHeight)
 			{
-				if(this._texture)
+				if(this._textureFrame)
 				{
 					newHeight = this._textureFrame.height * this._textureScale;
 					if(!needsWidth)
@@ -415,6 +758,7 @@ package feathers.controls
 				{
 					newHeight = 0;
 				}
+				newHeight += this._paddingTop + this._paddingBottom;
 			}
 
 			return this.setSizeInternal(newWidth, newHeight, false);
@@ -510,20 +854,20 @@ package feathers.controls
 				HELPER_RECTANGLE.height = this._textureFrame.height * this._textureScale;
 				HELPER_RECTANGLE2.x = 0;
 				HELPER_RECTANGLE2.y = 0;
-				HELPER_RECTANGLE2.width = this.actualWidth;
-				HELPER_RECTANGLE2.height = this.actualHeight;
+				HELPER_RECTANGLE2.width = this.actualWidth - this._paddingLeft - this._paddingRight;
+				HELPER_RECTANGLE2.height = this.actualHeight - this._paddingTop - this._paddingBottom;
 				RectangleUtil.fit(HELPER_RECTANGLE, HELPER_RECTANGLE2, ScaleMode.SHOW_ALL, false, HELPER_RECTANGLE);
-				this.image.x = HELPER_RECTANGLE.x;
-				this.image.y = HELPER_RECTANGLE.y;
+				this.image.x = HELPER_RECTANGLE.x + this._paddingLeft;
+				this.image.y = HELPER_RECTANGLE.y + this._paddingTop;
 				this.image.width = HELPER_RECTANGLE.width;
 				this.image.height = HELPER_RECTANGLE.height;
 			}
 			else
 			{
-				this.image.x = 0;
-				this.image.y = 0;
-				this.image.width = this.actualWidth;
-				this.image.height = this.actualHeight;
+				this.image.x = this._paddingLeft;
+				this.image.y = this._paddingTop;
+				this.image.width = this.actualWidth - this._paddingLeft - this._paddingRight;
+				this.image.height = this.actualHeight - this._paddingTop - this._paddingBottom;
 			}
 		}
 
@@ -574,6 +918,12 @@ package feathers.controls
 					this._texture.dispose();
 				}
 			}
+			if(this._pendingTexture)
+			{
+				this._pendingTexture.dispose();
+				this._pendingTexture = null;
+			}
+			this._textureFrame = null;
 			this._textureBitmapData = null;
 			this._texture = null;
 			this._isTextureOwner = false;
@@ -582,16 +932,8 @@ package feathers.controls
 		/**
 		 * @private
 		 */
-		protected function loader_completeHandler(event:flash.events.Event):void
+		protected function replaceTexture(bitmapData:BitmapData):void
 		{
-			const bitmap:Bitmap = Bitmap(this.loader.content);
-			this.loader.contentLoaderInfo.removeEventListener(flash.events.Event.COMPLETE, loader_completeHandler);
-			this.loader.contentLoaderInfo.removeEventListener(IOErrorEvent.IO_ERROR, loader_errorHandler);
-			this.loader.contentLoaderInfo.removeEventListener(SecurityErrorEvent.SECURITY_ERROR, loader_errorHandler);
-			this.loader = null;
-			
-			this.cleanupTexture();
-			const bitmapData:BitmapData = bitmap.bitmapData;
 			this._texture = Texture.fromBitmapData(bitmapData, false);
 			if(Starling.handleLostContext)
 			{
@@ -608,6 +950,29 @@ package feathers.controls
 			this._isLoaded = true;
 			this.invalidate(INVALIDATION_FLAG_SIZE);
 			this.dispatchEventWith(starling.events.Event.COMPLETE);
+		}
+
+		/**
+		 * @private
+		 */
+		protected function loader_completeHandler(event:flash.events.Event):void
+		{
+			const bitmap:Bitmap = Bitmap(this.loader.content);
+			this.loader.contentLoaderInfo.removeEventListener(flash.events.Event.COMPLETE, loader_completeHandler);
+			this.loader.contentLoaderInfo.removeEventListener(IOErrorEvent.IO_ERROR, loader_errorHandler);
+			this.loader.contentLoaderInfo.removeEventListener(SecurityErrorEvent.SECURITY_ERROR, loader_errorHandler);
+			this.loader = null;
+			
+			this.cleanupTexture();
+			const bitmapData:BitmapData = bitmap.bitmapData;
+			if(this._delayTextureCreation)
+			{
+				this._pendingTexture = bitmapData;
+			}
+			else
+			{
+				this.replaceTexture(bitmapData);
+			}
 		}
 
 		/**

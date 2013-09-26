@@ -10,12 +10,14 @@ package feathers.core
 	import feathers.controls.text.BitmapFontTextRenderer;
 	import feathers.controls.text.StageTextTextEditor;
 	import feathers.events.FeathersEventType;
+	import feathers.layout.ILayoutData;
+	import feathers.layout.ILayoutDisplayObject;
 
+	import flash.errors.IllegalOperationError;
 	import flash.geom.Matrix;
 	import flash.geom.Point;
 	import flash.geom.Rectangle;
 
-	import starling.core.RenderSupport;
 	import starling.display.DisplayObject;
 	import starling.display.Sprite;
 	import starling.events.Event;
@@ -41,7 +43,7 @@ package feathers.core
 	 * basic template functions like <code>initialize()</code> and
 	 * <code>draw()</code>.
 	 */
-	public class FeathersControl extends Sprite implements IFeathersControl
+	public class FeathersControl extends Sprite implements IFeathersControl, ILayoutDisplayObject
 	{
 		/**
 		 * @private
@@ -55,19 +57,8 @@ package feathers.core
 
 		/**
 		 * @private
-		 * Meant to be constant, but the ValidationQueue needs access to
-		 * Starling in its constructor, so it needs to be instantiated after
-		 * Starling is initialized.
 		 */
-		protected static var VALIDATION_QUEUE:ValidationQueue = new ValidationQueue();
-
-		/**
-		 * @private
-		 * Used for clipping.
-		 *
-		 * @see #clipRect
-		 */
-		protected static var currentScissorRect:Rectangle;
+		protected static const VALIDATION_QUEUE:ValidationQueue = new ValidationQueue();
 
 		/**
 		 * Flag to indicate that everything is invalid and should be redrawn.
@@ -124,6 +115,12 @@ package feathers.core
 		public static const INVALIDATION_FLAG_SELECTED:String = "selected";
 
 		/**
+		 * Invalidation flag to indicate that the focus of the UI control has
+		 * changed.
+		 */
+		public static const INVALIDATION_FLAG_FOCUS:String = "focus";
+
+		/**
 		 * @private
 		 */
 		protected static const INVALIDATION_FLAG_TEXT_RENDERER:String = "textRenderer";
@@ -132,6 +129,16 @@ package feathers.core
 		 * @private
 		 */
 		protected static const INVALIDATION_FLAG_TEXT_EDITOR:String = "textEditor";
+
+		/**
+		 * @private
+		 */
+		protected static const ILLEGAL_WIDTH_ERROR:String = "A component's width cannot be NaN.";
+
+		/**
+		 * @private
+		 */
+		protected static const ILLEGAL_HEIGHT_ERROR:String = "A component's height cannot be NaN.";
 
 		/**
 		 * A function used by all UI controls that support text renderers to
@@ -174,6 +181,7 @@ package feathers.core
 		{
 			super();
 			this.addEventListener(Event.ADDED_TO_STAGE, initialize_addedToStageHandler);
+			this.addEventListener(Event.FLATTEN, feathersControl_flattenHandler);
 		}
 
 		/**
@@ -324,6 +332,17 @@ package feathers.core
 		 * explicit width value is provided. Each component has a different
 		 * automatic sizing behavior, but it's usually based on the component's
 		 * skin or content, including text or subcomponents.
+		 * 
+		 * <p><strong>Note:</strong> Values of the <code>width</code> and
+		 * <code>height</code> properties may not be accurate until after
+		 * validation. If you are seeing <code>width</code> or <code>height</code>
+		 * values of <code>0</code>, but you can see something on the screen and
+		 * know that the value should be larger, it may be because you asked for
+		 * the dimensions before the component had validated. Call
+		 * <code>validate()</code> to tell the component to immediately redraw
+		 * and calculate an accurate values for the dimensions.</p>
+		 * 
+		 * @see feathers.core.IFeathersControl#validate()
 		 */
 		override public function get width():Number
 		{
@@ -335,12 +354,25 @@ package feathers.core
 		 */
 		override public function set width(value:Number):void
 		{
-			if(this.explicitWidth == value || (isNaN(value) && isNaN(this.explicitWidth)))
+			if(this.explicitWidth == value)
+			{
+				return;
+			}
+			const valueIsNaN:Boolean = isNaN(value);
+			if(valueIsNaN && isNaN(this.explicitWidth))
 			{
 				return;
 			}
 			this.explicitWidth = value;
-			this.setSizeInternal(value, this.actualHeight, true);
+			if(valueIsNaN)
+			{
+				this.actualWidth = 0;
+				this.invalidate(INVALIDATION_FLAG_SIZE);
+			}
+			else
+			{
+				this.setSizeInternal(value, this.actualHeight, true);
+			}
 		}
 
 		/**
@@ -364,6 +396,17 @@ package feathers.core
 		 * explicit height value is provided. Each component has a different
 		 * automatic sizing behavior, but it's usually based on the component's
 		 * skin or content, including text or subcomponents.
+		 * 
+		 * <p><strong>Note:</strong> Values of the <code>width</code> and
+		 * <code>height</code> properties may not be accurate until after
+		 * validation. If you are seeing <code>width</code> or <code>height</code>
+		 * values of <code>0</code>, but you can see something on the screen and
+		 * know that the value should be larger, it may be because you asked for
+		 * the dimensions before the component had validated. Call
+		 * <code>validate()</code> to tell the component to immediately redraw
+		 * and calculate an accurate values for the dimensions.</p>
+		 * 
+		 * @see feathers.core.IFeathersControl#validate()
 		 */
 		override public function get height():Number
 		{
@@ -375,12 +418,25 @@ package feathers.core
 		 */
 		override public function set height(value:Number):void
 		{
-			if(this.explicitHeight == value || (isNaN(value) && isNaN(this.explicitHeight)))
+			if(this.explicitHeight == value)
+			{
+				return;
+			}
+			const valueIsNaN:Boolean = isNaN(value);
+			if(valueIsNaN && isNaN(this.explicitHeight))
 			{
 				return;
 			}
 			this.explicitHeight = value;
-			this.setSizeInternal(this.actualWidth, value, true);
+			if(valueIsNaN)
+			{
+				this.actualHeight = 0;
+				this.invalidate(INVALIDATION_FLAG_SIZE);
+			}
+			else
+			{
+				this.setSizeInternal(this.actualWidth, value, true);
+			}
 		}
 
 		/**
@@ -573,49 +629,408 @@ package feathers.core
 			this.invalidate(INVALIDATION_FLAG_SIZE);
 		}
 
-		private var _scaledClipRectXY:Point;
-		private var _scissorRect:Rectangle;
-
 		/**
 		 * @private
 		 */
-		protected var _clipRect:Rectangle;
+		protected var _includeInLayout:Boolean = true;
 
 		/**
-		 * @private
-		 * <strong>THIS PROPERTY MAY BE REMOVED WITHOUT WARNING</strong>. It
-		 * lives outside of the standard beta or deprecated system that Feathers
-		 * uses. After Starling Framework finalizes masking, it may be removed
-		 * or refactored. Use at your own risk.
+		 * @inheritDoc
 		 */
-		public function get clipRect():Rectangle
+		public function get includeInLayout():Boolean
 		{
-			return this._clipRect;
+			return this._includeInLayout;
 		}
 
 		/**
 		 * @private
 		 */
-		public function set clipRect(value:Rectangle):void
+		public function set includeInLayout(value:Boolean):void
 		{
-			this._clipRect = value;
-			if(this._clipRect)
+			if(this._includeInLayout == value)
 			{
-				if(!this._scaledClipRectXY)
-				{
-					this._scaledClipRectXY = new Point();
-				}
-				if(!this._scissorRect)
-				{
-					this._scissorRect = new Rectangle();
-				}
+				return;
+			}
+			this._includeInLayout = value;
+			this.dispatchEventWith(FeathersEventType.LAYOUT_DATA_CHANGE);
+		}
+
+		/**
+		 * @private
+		 */
+		protected var _layoutData:ILayoutData;
+
+		/**
+		 * @inheritDoc
+		 */
+		public function get layoutData():ILayoutData
+		{
+			return this._layoutData;
+		}
+
+		/**
+		 * @private
+		 */
+		public function set layoutData(value:ILayoutData):void
+		{
+			if(this._layoutData == value)
+			{
+				return;
+			}
+			if(this._layoutData)
+			{
+				this._layoutData.removeEventListener(Event.CHANGE, layoutData_changeHandler);
+			}
+			this._layoutData = value;
+			if(this._layoutData)
+			{
+				this._layoutData.addEventListener(Event.CHANGE, layoutData_changeHandler);
+			}
+			this.dispatchEventWith(FeathersEventType.LAYOUT_DATA_CHANGE);
+		}
+
+		/**
+		 * @private
+		 */
+		protected var _focusManager:IFocusManager;
+
+		/**
+		 * @copy feathers.core.IFocusDisplayObject#focusManager
+		 */
+		public function get focusManager():IFocusManager
+		{
+			return this._focusManager;
+		}
+
+		/**
+		 * @private
+		 */
+		public function set focusManager(value:IFocusManager):void
+		{
+			if(!(this is IFocusDisplayObject))
+			{
+				throw new IllegalOperationError("Cannot pass a focus manager to a component that does not implement feathers.core.IFocusDisplayObject");
+			}
+			if(this._focusManager == value)
+			{
+				return;
+			}
+			this._focusManager = value;
+			if(this._focusManager)
+			{
+				this.addEventListener(FeathersEventType.FOCUS_IN, focusInHandler);
+				this.addEventListener(FeathersEventType.FOCUS_OUT, focusOutHandler);
 			}
 			else
 			{
-				this._scaledClipRectXY = null;
-				this._scissorRect = null;
+				this.removeEventListener(FeathersEventType.FOCUS_IN, focusInHandler);
+				this.removeEventListener(FeathersEventType.FOCUS_OUT, focusOutHandler);
 			}
 		}
+
+		/**
+		 * @private
+		 */
+		protected var _isFocusEnabled:Boolean = true;
+
+		/**
+		 * @copy feathers.core.IFocusDisplayObject#isFocusEnabled
+		 */
+		public function get isFocusEnabled():Boolean
+		{
+			return this._isFocusEnabled;
+		}
+
+		/**
+		 * @private
+		 */
+		public function set isFocusEnabled(value:Boolean):void
+		{
+			if(!(this is IFocusDisplayObject))
+			{
+				throw new IllegalOperationError("Cannot enable focus on a component that does not implement feathers.core.IFocusDisplayObject");
+			}
+			if(this._isFocusEnabled == value)
+			{
+				return;
+			}
+			this._isFocusEnabled = value;
+		}
+
+		/**
+		 * @private
+		 */
+		protected var _nextTabFocus:IFocusDisplayObject;
+
+		/**
+		 * @copy feathers.core.IFocusDisplayObject#nextTabFocus
+		 */
+		public function get nextTabFocus():IFocusDisplayObject
+		{
+			return this._nextTabFocus;
+		}
+
+		/**
+		 * @private
+		 */
+		public function set nextTabFocus(value:IFocusDisplayObject):void
+		{
+			if(!(this is IFocusDisplayObject))
+			{
+				throw new IllegalOperationError("Cannot set next tab focus on a component that does not implement feathers.core.IFocusDisplayObject");
+			}
+			this._nextTabFocus = value;
+		}
+
+		/**
+		 * @private
+		 */
+		protected var _previousTabFocus:IFocusDisplayObject;
+
+		/**
+		 * @copy feathers.core.IFocusDisplayObject#previousTabFocus
+		 */
+		public function get previousTabFocus():IFocusDisplayObject
+		{
+			return this._previousTabFocus;
+		}
+
+		/**
+		 * @private
+		 */
+		public function set previousTabFocus(value:IFocusDisplayObject):void
+		{
+			if(!(this is IFocusDisplayObject))
+			{
+				throw new IllegalOperationError("Cannot set previous tab focus on a component that does not implement feathers.core.IFocusDisplayObject");
+			}
+			this._previousTabFocus = value;
+		}
+
+		/**
+		 * @private
+		 */
+		protected var _focusIndicatorSkin:DisplayObject;
+
+		/**
+		 * If this component supports focus, this optional skin will be
+		 * displayed above the component when <code>showFocus()</code> is
+		 * called. The focus indicator skin is not always displayed when the
+		 * component has focus. Typically, if the component receives focus from
+		 * a touch, the focus indicator is not displayed.
+		 *
+		 * <p>The <code>touchable</code> of this skin will always be set to
+		 * <code>false</code> so that it does not "steal" touches from the
+		 * component or its sub-components. This skin will not affect the
+		 * dimensions of the component or its hit area. It is simply a visual
+		 * indicator of focus.</p>
+		 */
+		public function get focusIndicatorSkin():DisplayObject
+		{
+			return this._focusIndicatorSkin;
+		}
+
+		/**
+		 * @private
+		 */
+		public function set focusIndicatorSkin(value:DisplayObject):void
+		{
+			if(!(this is IFocusDisplayObject))
+			{
+				throw new IllegalOperationError("Cannot set focus indicator skin on a component that does not implement feathers.core.IFocusDisplayObject");
+			}
+			if(this._focusIndicatorSkin == value)
+			{
+				return;
+			}
+			if(this._focusIndicatorSkin && this._focusIndicatorSkin.parent)
+			{
+				this._focusIndicatorSkin.removeFromParent(false);
+			}
+			this._focusIndicatorSkin = value;
+			if(this._focusIndicatorSkin)
+			{
+				this._focusIndicatorSkin.touchable = false;
+			}
+			if(this._focusManager && this._focusManager.focus == this)
+			{
+				this.invalidate(INVALIDATION_FLAG_STYLES);
+			}
+		}
+
+		/**
+		 * Quickly sets all focus padding properties to the same value. The
+		 * <code>focusPadding</code> getter always returns the value of
+		 * <code>focusPaddingTop</code>, but the other focus padding values may
+		 * be different.
+		 *
+		 * <p>The following example gives the button 2 pixels of focus padding
+		 * on all sides:</p>
+		 *
+		 * <listing version="3.0">
+		 * object.padding = 2;</listing>
+		 */
+		public function get focusPadding():Number
+		{
+			return this._focusPaddingTop;
+		}
+
+		/**
+		 * @private
+		 */
+		public function set focusPadding(value:Number):void
+		{
+			this.focusPaddingTop = value;
+			this.focusPaddingRight = value;
+			this.focusPaddingBottom = value;
+			this.focusPaddingLeft = value;
+		}
+
+		/**
+		 * @private
+		 */
+		protected var _focusPaddingTop:Number = 0;
+
+		/**
+		 * The minimum space, in pixels, between the object's top edge and the
+		 * top edge of the focus indicator skin. A negative value may be used
+		 * to expand the focus indicator skin outside the bounds of the object.
+		 *
+		 * <p>The following example gives the focus indicator skin -2 pixels of
+		 * padding on the top edge only:</p>
+		 *
+		 * <listing version="3.0">
+		 * button.focusPaddingTop = -2;</listing>
+		 */
+		public function get focusPaddingTop():Number
+		{
+			return this._focusPaddingTop;
+		}
+
+		/**
+		 * @private
+		 */
+		public function set focusPaddingTop(value:Number):void
+		{
+			if(this._focusPaddingTop == value)
+			{
+				return;
+			}
+			this._focusPaddingTop = value;
+			this.invalidate(INVALIDATION_FLAG_FOCUS);
+		}
+
+		/**
+		 * @private
+		 */
+		protected var _focusPaddingRight:Number = 0;
+
+		/**
+		 * The minimum space, in pixels, between the object's right edge and the
+		 * right edge of the focus indicator skin. A negative value may be used
+		 * to expand the focus indicator skin outside the bounds of the object.
+		 *
+		 * <p>The following example gives the focus indicator skin -2 pixels of
+		 * padding on the right edge only:</p>
+		 *
+		 * <listing version="3.0">
+		 * button.focusPaddingRight = -2;</listing>
+		 */
+		public function get focusPaddingRight():Number
+		{
+			return this._focusPaddingRight;
+		}
+
+		/**
+		 * @private
+		 */
+		public function set focusPaddingRight(value:Number):void
+		{
+			if(this._focusPaddingRight == value)
+			{
+				return;
+			}
+			this._focusPaddingRight = value;
+			this.invalidate(INVALIDATION_FLAG_FOCUS);
+		}
+
+		/**
+		 * @private
+		 */
+		protected var _focusPaddingBottom:Number = 0;
+
+		/**
+		 * The minimum space, in pixels, between the object's bottom edge and the
+		 * bottom edge of the focus indicator skin. A negative value may be used
+		 * to expand the focus indicator skin outside the bounds of the object.
+		 *
+		 * <p>The following example gives the focus indicator skin -2 pixels of
+		 * padding on the bottom edge only:</p>
+		 *
+		 * <listing version="3.0">
+		 * button.focusPaddingBottom = -2;</listing>
+		 */
+		public function get focusPaddingBottom():Number
+		{
+			return this._focusPaddingBottom;
+		}
+
+		/**
+		 * @private
+		 */
+		public function set focusPaddingBottom(value:Number):void
+		{
+			if(this._focusPaddingBottom == value)
+			{
+				return;
+			}
+			this._focusPaddingBottom = value;
+			this.invalidate(INVALIDATION_FLAG_FOCUS);
+		}
+
+		/**
+		 * @private
+		 */
+		protected var _focusPaddingLeft:Number = 0;
+
+		/**
+		 * The minimum space, in pixels, between the object's left edge and the
+		 * left edge of the focus indicator skin. A negative value may be used
+		 * to expand the focus indicator skin outside the bounds of the object.
+		 *
+		 * <p>The following example gives the focus indicator skin -2 pixels of
+		 * padding on the right edge only:</p>
+		 *
+		 * <listing version="3.0">
+		 * button.focusPaddingLeft = -2;</listing>
+		 */
+		public function get focusPaddingLeft():Number
+		{
+			return this._focusPaddingLeft;
+		}
+
+		/**
+		 * @private
+		 */
+		public function set focusPaddingLeft(value:Number):void
+		{
+			if(this._focusPaddingLeft == value)
+			{
+				return;
+			}
+			this._focusPaddingLeft = value;
+			this.invalidate(INVALIDATION_FLAG_FOCUS);
+		}
+
+		/**
+		 * @private
+		 */
+		protected var _hasFocus:Boolean = false;
+
+		/**
+		 * @private
+		 */
+		protected var _showFocus:Boolean = false;
 
 		/**
 		 * @private
@@ -688,64 +1103,16 @@ package feathers.core
 		/**
 		 * @private
 		 */
-		override public function render(support:RenderSupport, parentAlpha:Number):void
-		{
-			if(this._clipRect)
-			{
-				this.getBounds(this.stage, this._scissorRect);
-				this.getTransformationMatrix(this.stage, HELPER_MATRIX);
-				const scaleX:Number = HELPER_MATRIX.a;
-				const scaleY:Number = HELPER_MATRIX.d;
-				this._scissorRect.x += this._clipRect.x * scaleX;
-				this._scissorRect.y += this._clipRect.y * scaleY;
-				this._scissorRect.width = this._clipRect.width * scaleX;
-				this._scissorRect.height = this._clipRect.height * scaleY;
-
-				const oldRect:Rectangle = currentScissorRect;
-				if(oldRect)
-				{
-					this._scissorRect = this._scissorRect.intersection(oldRect);
-				}
-				//round to nearest pixels because the GPU will force it to
-				//happen, and the check that follows needs it
-				this._scissorRect.x = Math.round(this._scissorRect.x);
-				this._scissorRect.y = Math.round(this._scissorRect.y);
-				this._scissorRect.width = Math.round(this._scissorRect.width);
-				this._scissorRect.height = Math.round(this._scissorRect.height);
-				if(this._scissorRect.isEmpty() ||
-					this._scissorRect.x >= this.stage.stageWidth ||
-					this._scissorRect.y >= this.stage.stageHeight ||
-					(this._scissorRect.x + this._scissorRect.width) <= 0 ||
-					(this._scissorRect.y + this._scissorRect.height) <= 0)
-				{
-					//not in bounds of stage. don't render.
-					return;
-				}
-				support.finishQuadBatch();
-				support.scissorRectangle = this._scissorRect;
-				currentScissorRect = this._scissorRect;
-			}
-			super.render(support, parentAlpha);
-			if(this._clipRect)
-			{
-				support.finishQuadBatch();
-				currentScissorRect = oldRect;
-				support.scissorRectangle = oldRect;
-			}
-		}
-
-		/**
-		 * @private
-		 */
 		override public function hitTest(localPoint:Point, forTouch:Boolean=false):DisplayObject
 		{
-			if(this._clipRect && !this._clipRect.contains(localPoint.x, localPoint.y))
-			{
-				return null;
-			}
 			if(this._isQuickHitAreaEnabled)
 			{
 				if(forTouch && (!this.visible || !this.touchable))
+				{
+					return null;
+				}
+				const clipRect:Rectangle = this.clipRect;
+				if(clipRect && !clipRect.containsPoint(localPoint))
 				{
 					return null;
 				}
@@ -755,12 +1122,19 @@ package feathers.core
 		}
 
 		/**
-		 * When called, the UI control will redraw within one frame.
-		 * Invalidation limits processing so that multiple property changes only
-		 * trigger a single redraw.
-		 *
-		 * <p>If the UI control isn't on the display list, it will never redraw.
-		 * The control will automatically invalidate once it has been added.</p>
+		 * Call this function to tell the UI control that a redraw is pending.
+		 * The redraw will happen immediately before Starling renders the UI
+		 * control to the screen. The validation system exists to ensure that
+		 * multiple properties can be set together without redrawing multiple
+		 * times in between each property change.
+		 * 
+		 * <p>If you cannot wait until later for the validation to happen, you
+		 * can call <code>validate()</code> to redraw immediately. As an example,
+		 * you might want to validate immediately if you need to access the
+		 * correct <code>width</code> or <code>height</code> values of the UI
+		 * control, since these values are calculated during validation.</p>
+		 * 
+		 * @see feathers.core.FeathersControl#validate()
 		 */
 		public function invalidate(flag:String = INVALIDATION_FLAG_ALL):void
 		{
@@ -822,7 +1196,18 @@ package feathers.core
 
 		/**
 		 * Immediately validates the control, which triggers a redraw, if one
-		 * is pending.
+		 * is pending. Validation exists to postpone redrawing a component until
+		 * the last possible moment before rendering so that multiple properties
+		 * can be changed at once without requiring a full redraw after each
+		 * change.
+		 * 
+		 * <p>A component cannot validate if it does not have access to the
+		 * stage and if it hasn't initialized yet. A component initializes the
+		 * first time that it has been added to the stage.</p>
+		 * 
+		 * @see #invalidate()
+		 * @see #initialize()
+		 * @see feathers.events.FeathersEventType#INITIALIZE
 		 */
 		public function validate():void
 		{
@@ -860,9 +1245,12 @@ package feathers.core
 		}
 
 		/**
-		 * Indicates whether the control is invalid or not. You may optionally
-		 * pass in a specific flag to check if that particular flag is set. If
-		 * the "all" flag is set, the result will always be true.
+		 * Indicates whether the control is pending validation or not. By
+		 * default, returns <code>true</code> if any invalidation flag has been
+		 * set. If you pass in a specific flag, returns <code>true</code> only
+		 * if that flag has been set (others may be set too, but it checks the
+		 * specific flag only. If all flags have been marked as invalid, always
+		 * returns <code>true</code>.
 		 */
 		public function isInvalid(flag:String = null):Boolean
 		{
@@ -887,19 +1275,64 @@ package feathers.core
 		public function setSize(width:Number, height:Number):void
 		{
 			this.explicitWidth = width;
+			var widthIsNaN:Boolean = isNaN(width);
+			if(widthIsNaN)
+			{
+				this.actualWidth = 0;
+			}
 			this.explicitHeight = height;
-			this.setSizeInternal(width, height, true);
+			var heightIsNaN:Boolean = isNaN(height);
+			if(heightIsNaN)
+			{
+				this.actualHeight = 0;
+			}
+
+			if(widthIsNaN || heightIsNaN)
+			{
+				this.invalidate(INVALIDATION_FLAG_SIZE);
+			}
+			else
+			{
+				this.setSizeInternal(width, height, true);
+			}
+		}
+
+		/**
+		 * @copy feathers.core.IFocusDisplayObject#showFocus()
+		 */
+		public function showFocus():void
+		{
+			if(!this._hasFocus || !this._focusIndicatorSkin)
+			{
+				return;
+			}
+
+			this._showFocus = true;
+			this.invalidate(INVALIDATION_FLAG_FOCUS);
+		}
+
+		/**
+		 * @copy feathers.core.IFocusDisplayObject#hideFocus()
+		 */
+		public function hideFocus():void
+		{
+			if(!this._hasFocus || !this._focusIndicatorSkin)
+			{
+				return;
+			}
+
+			this._showFocus = false;
+			this.invalidate(INVALIDATION_FLAG_FOCUS);
 		}
 
 		/**
 		 * Sets the width and height of the control, with the option of
-		 * invalidating or not. Intended to be used for automatic resizing.
+		 * invalidating or not. Intended to be used when the <code>width</code>
+		 * and <code>height</code> values have not been set explicitly, and the
+		 * UI control needs to measure itself and choose an "ideal" size.
 		 */
 		protected function setSizeInternal(width:Number, height:Number, canInvalidate:Boolean):Boolean
 		{
-			const oldWidth:Number = this.actualWidth;
-			const oldHeight:Number = this.actualHeight;
-			var resized:Boolean = false;
 			if(!isNaN(this.explicitWidth))
 			{
 				width = this.explicitWidth;
@@ -916,6 +1349,15 @@ package feathers.core
 			{
 				height = Math.min(this._maxHeight, Math.max(this._minHeight, height));
 			}
+			if(isNaN(width))
+			{
+				throw new ArgumentError(ILLEGAL_WIDTH_ERROR);
+			}
+			if(isNaN(height))
+			{
+				throw new ArgumentError(ILLEGAL_HEIGHT_ERROR);
+			}
+			var resized:Boolean = false;
 			if(this.actualWidth != width)
 			{
 				this.actualWidth = width;
@@ -950,8 +1392,13 @@ package feathers.core
 		}
 
 		/**
-		 * Override to initialize the UI control. Should be used to create
-		 * children and set up event listeners.
+		 * Called the first time that the UI control is added to the stage, and
+		 * you should override this function to customize the initialization
+		 * process. Do things like create children and set up event listeners.
+		 * After this function is called, <code>FeathersEventType.INITIALIZE</code>
+		 * is dispatched.
+		 *
+		 * @see feathers.events.FeathersEventType#INITIALIZE
 		 */
 		protected function initialize():void
 		{
@@ -960,10 +1407,81 @@ package feathers.core
 
 		/**
 		 * Override to customize layout and to adjust properties of children.
+		 * Called when the component validates, if any flags have been marked
+		 * to indicate that validation is pending.
 		 */
 		protected function draw():void
 		{
 
+		}
+
+		/**
+		 * Updates the focus indicator skin by showing or hiding it and
+		 * adjusting its position and dimensions. This function is not called
+		 * automatically. Components that support focus should call this
+		 * function at an appropriate point within the <code>draw()</code>
+		 * function. This function may be overridden if the default behavior is
+		 * not desired.
+		 */
+		protected function refreshFocusIndicator():void
+		{
+			if(this._focusIndicatorSkin)
+			{
+				if(this._hasFocus && this._showFocus)
+				{
+					if(this._focusIndicatorSkin.parent != this)
+					{
+						this.addChild(this._focusIndicatorSkin);
+					}
+					else
+					{
+						this.setChildIndex(this._focusIndicatorSkin, this.numChildren - 1);
+					}
+				}
+				else if(this._focusIndicatorSkin.parent)
+				{
+					this._focusIndicatorSkin.removeFromParent(false);
+				}
+				this._focusIndicatorSkin.x = this._focusPaddingLeft;
+				this._focusIndicatorSkin.y = this._focusPaddingTop;
+				this._focusIndicatorSkin.width = this.actualWidth - this._focusPaddingLeft - this._focusPaddingRight;
+				this._focusIndicatorSkin.height = this.actualHeight - this._focusPaddingTop - this._focusPaddingBottom;
+			}
+		}
+
+		/**
+		 * Default event handler for <code>FeathersEventType.FOCUS_IN</code>
+		 * that may be overridden in subclasses to perform additional actions
+		 * when the component receives focus.
+		 */
+		protected function focusInHandler(event:Event):void
+		{
+			this._hasFocus = true;
+			this.invalidate(INVALIDATION_FLAG_FOCUS);
+		}
+
+		/**
+		 * Default event handler for <code>FeathersEventType.FOCUS_OUT</code>
+		 * that may be overridden in subclasses to perform additional actions
+		 * when the component loses focus.
+		 */
+		protected function focusOutHandler(event:Event):void
+		{
+			this._hasFocus = false;
+			this._showFocus = false;
+			this.invalidate(INVALIDATION_FLAG_FOCUS);
+		}
+
+		/**
+		 * @private
+		 */
+		protected function feathersControl_flattenHandler(event:Event):void
+		{
+			if(!this.stage || !this._isInitialized)
+			{
+				throw new IllegalOperationError("Cannot flatten this component until it is initialized and has access to the stage.");
+			}
+			this.validate();
 		}
 
 		/**
@@ -990,6 +1508,14 @@ package feathers.core
 				this._invalidateCount = 0;
 				VALIDATION_QUEUE.addControl(this, false);
 			}
+		}
+
+		/**
+		 * @private
+		 */
+		protected function layoutData_changeHandler(event:Event):void
+		{
+			this.dispatchEventWith(FeathersEventType.LAYOUT_DATA_CHANGE);
 		}
 	}
 }

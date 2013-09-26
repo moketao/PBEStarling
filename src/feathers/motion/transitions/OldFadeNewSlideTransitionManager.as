@@ -41,13 +41,22 @@ package feathers.motion.transitions
 		/**
 		 * Constructor.
 		 */
-		public function OldFadeNewSlideTransitionManager(navigator:ScreenNavigator, quickStack:Class = null)
+		public function OldFadeNewSlideTransitionManager(navigator:ScreenNavigator, quickStackScreenClass:Class = null, quickStackScreenID:String = null)
 		{
 			if(!navigator)
 			{
 				throw new ArgumentError("ScreenNavigator cannot be null.");
 			}
 			this.navigator = navigator;
+			var quickStack:String;
+			if(quickStackScreenClass)
+			{
+				quickStack = getQualifiedClassName(quickStackScreenClass);
+			}
+			if(quickStack && quickStackScreenID)
+			{
+				quickStack += "~" + quickStackScreenID;
+			}
 			if(quickStack)
 			{
 				this._stack.push(quickStack);
@@ -96,6 +105,12 @@ package feathers.motion.transitions
 		 * The easing function to use.
 		 */
 		public var ease:Object = Transitions.EASE_OUT;
+
+		/**
+		 * Determines if the next transition should be skipped. After the
+		 * transition, this value returns to <code>false</code>.
+		 */
+		public var skipNextTransition:Boolean = false;
 		
 		/**
 		 * Removes all saved classes from the stack that are used to determine
@@ -113,21 +128,26 @@ package feathers.motion.transitions
 		 */
 		protected function onTransition(oldScreen:DisplayObject, newScreen:DisplayObject, onComplete:Function):void
 		{
-			if(!oldScreen)
-			{
-				if(newScreen)
-				{
-					newScreen.x = 0;
-				}
-				onComplete();
-				return;
-			}
-			
 			if(this._activeTransition)
 			{
 				Starling.juggler.remove(this._activeTransition);
 				this._activeTransition = null;
 				this._savedOtherTarget = null;
+			}
+
+			if(!oldScreen || this.skipNextTransition)
+			{
+				this.skipNextTransition = false;
+				this._savedCompleteHandler = null;
+				if(newScreen)
+				{
+					newScreen.x = 0;
+				}
+				if(onComplete != null)
+				{
+					onComplete();
+				}
+				return;
 			}
 			
 			this._savedCompleteHandler = onComplete;

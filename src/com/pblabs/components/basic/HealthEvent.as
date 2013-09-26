@@ -9,6 +9,7 @@
 package com.pblabs.components.basic
 {
     import com.pblabs.engine.entity.IEntity;
+	import flash.geom.Point;
     
     import flash.events.Event;
     
@@ -32,16 +33,19 @@ package com.pblabs.components.basic
          * component is not updated until after the event is processed.
          */
         public var amount:Number;
+		
+		public var location:Point;
         
         /**
          * Entity which caused this damage (or healing), if any.
          */
         public var originatingEntity:IEntity;
         
-        public function HealthEvent(type:String, deltaAmt:Number, amountAmt:Number, originator:IEntity, bubbles:Boolean=false, cancelable:Boolean=false)
+        public function HealthEvent(type:String, deltaAmt:Number, amountAmt:Number, originator:IEntity,  dmgLocation:Point=null, bubbles:Boolean=false, cancelable:Boolean=false)
         {
             delta = deltaAmt;
             amount = amountAmt;
+			location = dmgLocation;
             originatingEntity = originator;
             super(type, bubbles, cancelable);
         }

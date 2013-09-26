@@ -13,7 +13,6 @@ package feathers.controls.text
 	import feathers.text.StageTextField;
 
 	import flash.display.BitmapData;
-	import flash.display3D.textures.Texture;
 	import flash.events.Event;
 	import flash.events.FocusEvent;
 	import flash.events.KeyboardEvent;
@@ -43,9 +42,14 @@ package feathers.controls.text
 	[Event(name="change",type="starling.events.Event")]
 
 	/**
-	 * Dispatched when the user presses the Enter key while the editor has focus.
+	 * Dispatched when the user presses the Enter key while the editor has
+	 * focus. This event may not be dispatched on some platforms, depending on
+	 * the value of <code>returnKeyLabel</code>. This issue may even occur when
+	 * using the <em>default value</em> of <code>returnKeyLabel</code>!
 	 *
 	 * @eventType feathers.events.FeathersEventType.ENTER
+	 * @see #returnKeyLabel
+	 * @see flash.text.ReturnKeyLabel
 	 */
 	[Event(name="enter",type="starling.events.Event")]
 
@@ -134,6 +138,16 @@ package feathers.controls.text
 		/**
 		 * @private
 		 */
+		protected var _needsNewTexture:Boolean = false;
+
+		/**
+		 * @private
+		 */
+		protected var _ignoreStageTextChanges:Boolean = false;
+
+		/**
+		 * @private
+		 */
 		protected var _text:String = "";
 
 		/**
@@ -192,13 +206,6 @@ package feathers.controls.text
 		 * @private
 		 */
 		protected var _stageTextIsComplete:Boolean = false;
-
-		/**
-		 * @private
-		 * Stores the snapshot of the StageText to display when the StageText
-		 * isn't visible.
-		 */
-		protected var textSnapshotBitmapData:BitmapData;
 
 		/**
 		 * @private
@@ -317,27 +324,36 @@ package feathers.controls.text
 		/**
 		 * @private
 		 */
-		protected var _editable:Boolean = true;
+		protected var _isEditable:Boolean = true;
 
 		/**
-		 * Same as the <code>StageText</code> property with the same name.
+		 * Determines if the text input is editable. If the text input is not
+		 * editable, it will still appear enabled.
 		 */
-		public function get editable():Boolean
+		public function get isEditable():Boolean
 		{
-			return this._editable;
+			return this._isEditable;
 		}
 
 		/**
 		 * @private
 		 */
-		public function set editable(value:Boolean):void
+		public function set isEditable(value:Boolean):void
 		{
-			if(this._editable == value)
+			if(this._isEditable == value)
 			{
 				return;
 			}
-			this._editable = value;
+			this._isEditable = value;
 			this.invalidate(INVALIDATION_FLAG_STYLES);
+		}
+
+		/**
+		 * @inheritDoc
+		 */
+		public function get setTouchFocusOnEndedPhase():Boolean
+		{
+			return true;
 		}
 
 		/**
@@ -473,7 +489,7 @@ package feathers.controls.text
 		/**
 		 * @private
 		 */
-		protected var _maxChars:int = int.MAX_VALUE;
+		protected var _maxChars:int = 0;
 
 		/**
 		 * Same as the <code>StageText</code> property with the same name.
@@ -493,6 +509,36 @@ package feathers.controls.text
 				return;
 			}
 			this._maxChars = value;
+			this.invalidate(INVALIDATION_FLAG_STYLES);
+		}
+
+		/**
+		 * @private
+		 */
+		protected var _multiline:Boolean = false;
+
+		/**
+		 * Same as the <code>StageText</code> property with the same name,
+		 * except it is configurable after the text renderer is created. The
+		 * <code>StageText</code> instance will be disposed and recreated when
+		 * this property changes after the <code>StageText</code> text was
+		 * initially created.
+		 */
+		public function get multiline():Boolean
+		{
+			return this._multiline;
+		}
+
+		/**
+		 * @private
+		 */
+		public function set multiline(value:Boolean):void
+		{
+			if(this._multiline == value)
+			{
+				return;
+			}
+			this._multiline = value;
 			this.invalidate(INVALIDATION_FLAG_STYLES);
 		}
 
@@ -605,23 +651,7 @@ package feathers.controls.text
 		 */
 		override public function dispose():void
 		{
-			if(this.textSnapshotBitmapData)
-			{
-				this.textSnapshotBitmapData.dispose();
-				this.textSnapshotBitmapData = null;
-			}
-
-			if(this.stageText)
-			{
-				this.disposeStageText();
-			}
-
-			if(this._measureTextField)
-			{
-				Starling.current.nativeStage.removeChild(this._measureTextField);
-				this._measureTextField = null;
-			}
-
+			this.disposeContent();
 			super.dispose();
 		}
 
@@ -671,17 +701,48 @@ package feathers.controls.text
 			{
 				if(position)
 				{
-					if(position.x < 0)
+					const positionX:Number = position.x;
+					const positionY:Number = position.y;
+					if(positionX < 0)
 					{
 						this._pendingSelectionStartIndex = this._pendingSelectionEndIndex = 0;
 					}
 					else
 					{
-						this._pendingSelectionStartIndex = this._measureTextField.getCharIndexAtPoint(position.x, position.y);
-						const bounds:Rectangle = this._measureTextField.getCharBoundaries(this._pendingSelectionStartIndex);
-						if(bounds && (bounds.x + bounds.width - position.x) < (position.x - bounds.x))
+						this._pendingSelectionStartIndex = this._measureTextField.getCharIndexAtPoint(positionX, positionY);
+						if(this._pendingSelectionStartIndex < 0)
 						{
-							this._pendingSelectionStartIndex++;
+							if(this._multiline)
+							{
+								const lineIndex:int = int(positionY / this._measureTextField.getLineMetrics(0).height);
+								try
+								{
+									this._pendingSelectionStartIndex = this._measureTextField.getLineOffset(lineIndex) + this._measureTextField.getLineLength(lineIndex);
+									if(this._pendingSelectionStartIndex != this._text.length)
+									{
+										this._pendingSelectionStartIndex--;
+									}
+								}
+								catch(error:Error)
+								{
+									//we may be checking for a line beyond the
+									//end that doesn't exist
+									this._pendingSelectionStartIndex = this._text.length;
+								}
+							}
+							else
+							{
+								this._pendingSelectionStartIndex = this._text.length;
+							}
+						}
+						else
+						{
+							const bounds:Rectangle = this._measureTextField.getCharBoundaries(this._pendingSelectionStartIndex);
+							const boundsX:Number = bounds.x;
+							if(bounds && (boundsX + bounds.width - positionX) < (positionX - boundsX))
+							{
+								this._pendingSelectionStartIndex++;
+							}
 						}
 						this._pendingSelectionEndIndex = this._pendingSelectionStartIndex;
 					}
@@ -696,6 +757,19 @@ package feathers.controls.text
 			{
 				this._isWaitingToSetFocus = true;
 			}
+		}
+
+		/**
+		 * @inheritDoc
+		 */
+		public function clearFocus():void
+		{
+			if(!this._stageTextHasFocus)
+			{
+				return;
+			}
+			Starling.current.nativeStage.focus = Starling.current.nativeStage;
+			this.dispatchEventWith(FeathersEventType.FOCUS_OUT);
 		}
 
 		/**
@@ -717,17 +791,62 @@ package feathers.controls.text
 		}
 
 		/**
+		 * @inheritDoc
+		 */
+		public function measureText(result:Point = null):Point
+		{
+			if(!result)
+			{
+				result = new Point();
+			}
+
+			if(!this._measureTextField)
+			{
+				result.x = result.y = 0;
+				return result;
+			}
+
+			const needsWidth:Boolean = isNaN(this.explicitWidth);
+			const needsHeight:Boolean = isNaN(this.explicitHeight);
+			if(!needsWidth && !needsHeight)
+			{
+				result.x = this.explicitWidth;
+				result.y = this.explicitHeight;
+				return result;
+			}
+
+			this.commit();
+
+			result = this.measure(result);
+
+			return result;
+		}
+
+		/**
 		 * @private
 		 */
 		override protected function draw():void
 		{
+			var sizeInvalid:Boolean = this.isInvalid(INVALIDATION_FLAG_SIZE);
+
+			this.commit();
+
+			sizeInvalid = this.autoSizeIfNeeded() || sizeInvalid;
+
+			this.layout(sizeInvalid);
+		}
+
+		/**
+		 * @private
+		 */
+		protected function commit():void
+		{
 			const stateInvalid:Boolean = this.isInvalid(INVALIDATION_FLAG_STATE);
 			const stylesInvalid:Boolean = this.isInvalid(INVALIDATION_FLAG_STYLES);
 			const dataInvalid:Boolean = this.isInvalid(INVALIDATION_FLAG_DATA);
-			const positionInvalid:Boolean = this.isInvalid(INVALIDATION_FLAG_POSITION);
-			const skinInvalid:Boolean = this.isInvalid(INVALIDATION_FLAG_SKIN);
-			var sizeInvalid:Boolean = this.isInvalid(INVALIDATION_FLAG_SIZE);
 
+			const oldIgnoreStageTextChanges:Boolean = this._ignoreStageTextChanges;
+			this._ignoreStageTextChanges = true;
 			if(stylesInvalid)
 			{
 				this.refreshStageTextProperties();
@@ -746,30 +865,84 @@ package feathers.controls.text
 				}
 				this._measureTextField.text = this.stageText.text;
 			}
+			this._ignoreStageTextChanges = oldIgnoreStageTextChanges;
 
-			if(stateInvalid)
+			if(stylesInvalid || stateInvalid)
 			{
-				this.stageText.editable = this._isEnabled;
+				this.stageText.editable = this._isEditable && this._isEnabled;
 			}
+		}
+
+		/**
+		 * @private
+		 */
+		protected function measure(result:Point = null):Point
+		{
+			if(!result)
+			{
+				result = new Point();
+			}
+
+			const needsWidth:Boolean = isNaN(this.explicitWidth);
+			const needsHeight:Boolean = isNaN(this.explicitHeight);
+
+			this._measureTextField.autoSize = TextFieldAutoSize.LEFT;
+
+			var newWidth:Number = this.explicitWidth;
+			if(needsWidth)
+			{
+				newWidth = Math.max(this._minWidth, Math.min(this._maxWidth, this._measureTextField.width));
+			}
+
+			this._measureTextField.width = newWidth;
+			var newHeight:Number = this.explicitHeight;
+			if(needsHeight)
+			{
+				newHeight = Math.max(this._minHeight, Math.min(this._maxHeight, this._measureTextField.height));
+			}
+
+			this._measureTextField.autoSize = TextFieldAutoSize.NONE;
+
+			//put the width and height back just in case we measured without
+			//a full validation
+			this._measureTextField.width = this.actualWidth;
+			this._measureTextField.height = this.actualHeight;
+
+			result.x = newWidth;
+			result.y = newHeight;
+
+			return result;
+		}
+
+		/**
+		 * @private
+		 */
+		protected function layout(sizeInvalid:Boolean):void
+		{
+			const stateInvalid:Boolean = this.isInvalid(INVALIDATION_FLAG_STATE);
+			const stylesInvalid:Boolean = this.isInvalid(INVALIDATION_FLAG_STYLES);
+			const dataInvalid:Boolean = this.isInvalid(INVALIDATION_FLAG_DATA);
+			const positionInvalid:Boolean = this.isInvalid(INVALIDATION_FLAG_POSITION);
+			const skinInvalid:Boolean = this.isInvalid(INVALIDATION_FLAG_SKIN);
 
 			if(positionInvalid || sizeInvalid || stylesInvalid || skinInvalid || stateInvalid)
 			{
 				this.refreshViewPort();
+				const viewPort:Rectangle = this.stageText.viewPort;
+				const textureRoot:ConcreteTexture = this.textSnapshot ? this.textSnapshot.texture.root : null;
+				this._needsNewTexture = this._needsNewTexture || !this.textSnapshot || viewPort.width != textureRoot.width || viewPort.height != textureRoot.height;
 			}
 
-			if(stylesInvalid || dataInvalid || sizeInvalid)
+			if(!this._stageTextHasFocus && (stylesInvalid || dataInvalid || sizeInvalid || this._needsNewTexture))
 			{
-				if(!this._stageTextHasFocus)
+				const hasText:Boolean = this._text.length > 0;
+				if(hasText)
 				{
-					const hasText:Boolean = this._text.length > 0;
-					if(hasText)
-					{
-						this.refreshSnapshot(sizeInvalid || !this.textSnapshotBitmapData);
-					}
-					if(this.textSnapshot)
-					{
-						this.textSnapshot.visible = hasText;
-					}
+					this.refreshSnapshot();
+				}
+				if(this.textSnapshot)
+				{
+					this.textSnapshot.visible = hasText;
 				}
 			}
 
@@ -779,13 +952,37 @@ package feathers.controls.text
 		/**
 		 * @private
 		 */
+		protected function autoSizeIfNeeded():Boolean
+		{
+			const needsWidth:Boolean = isNaN(this.explicitWidth);
+			const needsHeight:Boolean = isNaN(this.explicitHeight);
+			if(!needsWidth && !needsHeight)
+			{
+				return false;
+			}
+
+			this.measure(HELPER_POINT);
+			return this.setSizeInternal(HELPER_POINT.x, HELPER_POINT.y, false);
+		}
+
+		/**
+		 * @private
+		 */
 		protected function refreshStageTextProperties():void
 		{
+			if(this.stageText.multiline != this._multiline)
+			{
+				if(this.stageText)
+				{
+					this.disposeStageText();
+				}
+				this.createStageText();
+			}
+
 			this.stageText.autoCapitalize = this._autoCapitalize;
 			this.stageText.autoCorrect = this._autoCorrect;
 			this.stageText.color = this._color;
 			this.stageText.displayAsPassword = this._displayAsPassword;
-			this.stageText.editable = this._editable;
 			this.stageText.fontFamily = this._fontFamily;
 			this.stageText.fontPosture = this._fontPosture;
 			this.stageText.fontSize = this._fontSize * Starling.contentScaleFactor;
@@ -800,6 +997,7 @@ package feathers.controls.text
 			this._measureTextField.displayAsPassword = this._displayAsPassword;
 			this._measureTextField.maxChars = this._maxChars;
 			this._measureTextField.restrict = this._restrict;
+			this._measureTextField.multiline = this._measureTextField.wordWrap = this._multiline;
 
 			const format:TextFormat = this._measureTextField.defaultTextFormat;
 			format.color = this._color;
@@ -844,60 +1042,56 @@ package feathers.controls.text
 		/**
 		 * @private
 		 */
-		protected function refreshSnapshot(needsNewBitmap:Boolean):void
+		protected function texture_onRestore():void
 		{
-			if(needsNewBitmap)
-			{
-				const viewPort:Rectangle = this.stageText.viewPort;
-				if(viewPort.width == 0 || viewPort.height == 0)
-				{
-					return;
-				}
-				if(!this.textSnapshotBitmapData || this.textSnapshotBitmapData.width != viewPort.width || this.textSnapshotBitmapData.height != viewPort.height)
-				{
-					if(this.textSnapshotBitmapData)
-					{
-						this.textSnapshotBitmapData.dispose();
-					}
-					this.textSnapshotBitmapData = new BitmapData(viewPort.width, viewPort.height, true, 0x00ff00ff);
-				}
-			}
+			this.refreshSnapshot();
+		}
 
-			if(!this.textSnapshotBitmapData)
+		/**
+		 * @private
+		 */
+		protected function refreshSnapshot():void
+		{
+			const viewPort:Rectangle = this.stageText.viewPort;
+			if(viewPort.width == 0 || viewPort.height == 0)
 			{
 				return;
 			}
-			this.textSnapshotBitmapData.fillRect(this.textSnapshotBitmapData.rect, 0x00ff00ff);
-			this.stageText.drawViewPortToBitmapData(this.textSnapshotBitmapData);
+
+			//StageText sucks because it requires that the BitmapData's width
+			//and height exactly match its view port width and height.
+			var bitmapData:BitmapData = new BitmapData(viewPort.width, viewPort.height, true, 0x00ff00ff);
+			this.stageText.drawViewPortToBitmapData(bitmapData);
+
+			var newTexture:Texture;
+			if(!this.textSnapshot || this._needsNewTexture)
+			{
+				newTexture = Texture.fromBitmapData(bitmapData, false, false, Starling.contentScaleFactor);
+				newTexture.root.onRestore = texture_onRestore;
+			}
 			if(!this.textSnapshot)
 			{
-				this.textSnapshot = new Image(starling.textures.Texture.fromBitmapData(this.textSnapshotBitmapData, false, false, Starling.contentScaleFactor));
+				this.textSnapshot = new Image(newTexture);
 				this.addChild(this.textSnapshot);
 			}
 			else
 			{
-				if(needsNewBitmap)
+				if(this._needsNewTexture)
 				{
 					this.textSnapshot.texture.dispose();
-					this.textSnapshot.texture = starling.textures.Texture.fromBitmapData(this.textSnapshotBitmapData, false, false, Starling.contentScaleFactor);
+					this.textSnapshot.texture = newTexture;
 					this.textSnapshot.readjustSize();
 				}
 				else
 				{
-					//this is faster, so use it if we haven't resized the
-					//bitmapdata
-					const texture:starling.textures.Texture = this.textSnapshot.texture;
-					if(Starling.handleLostContext && texture is ConcreteTexture)
-					{
-						ConcreteTexture(texture).restoreOnLostContext(this.textSnapshotBitmapData);
-					}
-					flash.display3D.textures.Texture(texture.base).uploadFromBitmapData(this.textSnapshotBitmapData);
+					//this is faster, if we haven't resized the bitmapdata
+					const existingTexture:Texture = this.textSnapshot.texture;
+					existingTexture.root.uploadBitmapData(bitmapData);
 				}
 			}
-
-			this.getTransformationMatrix(this.stage, HELPER_MATRIX);
-			this.textSnapshot.x = Math.round(HELPER_MATRIX.tx) - HELPER_MATRIX.tx;
-			this.textSnapshot.y = Math.round(HELPER_MATRIX.ty) - HELPER_MATRIX.ty;
+			bitmapData.dispose();
+			this.textSnapshot.visible = !this._stageTextHasFocus;
+			this._needsNewTexture = false;
 		}
 
 		/**
@@ -924,7 +1118,6 @@ package feathers.controls.text
 			stageTextViewPort.x = Math.round(starlingViewPort.x + HELPER_POINT.x * Starling.contentScaleFactor);
 			stageTextViewPort.y = Math.round(starlingViewPort.y + HELPER_POINT.y * Starling.contentScaleFactor);
 			stageTextViewPort.width = Math.round(Math.max(1, this.actualWidth * Starling.contentScaleFactor * this.scaleX));
-			//we're ignoring padding bottom here to keep the descent from being cut off
 			stageTextViewPort.height = Math.round(Math.max(1, this.actualHeight * Starling.contentScaleFactor * this.scaleY));
 			if(isNaN(stageTextViewPort.width) || isNaN(stageTextViewPort.height))
 			{
@@ -932,6 +1125,35 @@ package feathers.controls.text
 				stageTextViewPort.height = 1;
 			}
 			this.stageText.viewPort = stageTextViewPort;
+
+			this._measureTextField.width = this.actualWidth;
+			this._measureTextField.height = this.actualHeight;
+		}
+
+		/**
+		 * @private
+		 */
+		protected function disposeContent():void
+		{
+			if(this._measureTextField)
+			{
+				Starling.current.nativeStage.removeChild(this._measureTextField);
+				this._measureTextField = null;
+			}
+
+			if(this.stageText)
+			{
+				this.disposeStageText();
+			}
+
+			if(this.textSnapshot)
+			{
+				//avoid the need to call dispose(). we'll create a new snapshot
+				//when the renderer is added to stage again.
+				this.textSnapshot.texture.dispose();
+				this.removeChild(this.textSnapshot, true);
+				this.textSnapshot = null;
+			}
 		}
 
 		/**
@@ -939,14 +1161,49 @@ package feathers.controls.text
 		 */
 		protected function disposeStageText():void
 		{
+			if(!this.stageText)
+			{
+				return;
+			}
 			this.stageText.removeEventListener(flash.events.Event.CHANGE, stageText_changeHandler);
 			this.stageText.removeEventListener(KeyboardEvent.KEY_DOWN, stageText_keyDownHandler);
+			this.stageText.removeEventListener(KeyboardEvent.KEY_UP, stageText_keyUpHandler);
 			this.stageText.removeEventListener(FocusEvent.FOCUS_IN, stageText_focusInHandler);
 			this.stageText.removeEventListener(FocusEvent.FOCUS_OUT, stageText_focusOutHandler);
 			this.stageText.removeEventListener(flash.events.Event.COMPLETE, stageText_completeHandler);
 			this.stageText.stage = null;
 			this.stageText.dispose();
 			this.stageText = null;
+		}
+
+		/**
+		 * @private
+		 */
+		protected function createStageText():void
+		{
+			this._stageTextIsComplete = false;
+			var StageTextType:Class;
+			var initOptions:Object;
+			try
+			{
+				StageTextType = Class(getDefinitionByName("flash.text.StageText"));
+				const StageTextInitOptionsType:Class = Class(getDefinitionByName("flash.text.StageTextInitOptions"));
+				initOptions = new StageTextInitOptionsType(this._multiline);
+			}
+			catch(error:Error)
+			{
+				StageTextType = StageTextField;
+				initOptions = { multiline: this._multiline };
+			}
+			this.stageText = new StageTextType(initOptions);
+			this.stageText.visible = false;
+			this.stageText.addEventListener(flash.events.Event.CHANGE, stageText_changeHandler);
+			this.stageText.addEventListener(KeyboardEvent.KEY_DOWN, stageText_keyDownHandler);
+			this.stageText.addEventListener(KeyboardEvent.KEY_UP, stageText_keyUpHandler);
+			this.stageText.addEventListener(FocusEvent.FOCUS_IN, stageText_focusInHandler);
+			this.stageText.addEventListener(FocusEvent.FOCUS_OUT, stageText_focusOutHandler);
+			this.stageText.addEventListener(flash.events.Event.COMPLETE, stageText_completeHandler);
+			this.invalidate();
 		}
 
 		/**
@@ -971,28 +1228,7 @@ package feathers.controls.text
 				Starling.current.nativeStage.addChild(this._measureTextField);
 			}
 
-			this._stageTextIsComplete = false;
-			var StageTextType:Class;
-			var initOptions:Object;
-			try
-			{
-				StageTextType = Class(getDefinitionByName("flash.text.StageText"));
-				const StageTextInitOptionsType:Class = Class(getDefinitionByName("flash.text.StageTextInitOptions"));
-				initOptions = new StageTextInitOptionsType(false);
-			}
-			catch(error:Error)
-			{
-				StageTextType = StageTextField;
-				initOptions = { multiline: false };
-			}
-			this.stageText = new StageTextType(initOptions);
-			this.stageText.visible = false;
-			this.stageText.addEventListener(flash.events.Event.CHANGE, stageText_changeHandler);
-			this.stageText.addEventListener(KeyboardEvent.KEY_DOWN, stageText_keyDownHandler);
-			this.stageText.addEventListener(FocusEvent.FOCUS_IN, stageText_focusInHandler);
-			this.stageText.addEventListener(FocusEvent.FOCUS_OUT, stageText_focusOutHandler);
-			this.stageText.addEventListener(flash.events.Event.COMPLETE, stageText_completeHandler);
-			this.invalidate();
+			this.createStageText();
 		}
 
 		/**
@@ -1000,10 +1236,7 @@ package feathers.controls.text
 		 */
 		protected function removedFromStageHandler(event:starling.events.Event):void
 		{
-			Starling.current.nativeStage.removeChild(this._measureTextField);
-			this._measureTextField = null;
-
-			this.disposeStageText();
+			this.disposeContent();
 		}
 
 		/**
@@ -1011,6 +1244,10 @@ package feathers.controls.text
 		 */
 		protected function stageText_changeHandler(event:flash.events.Event):void
 		{
+			if(this._ignoreStageTextChanges)
+			{
+				return;
+			}
 			this.text = this.stageText.text;
 		}
 
@@ -1061,8 +1298,9 @@ package feathers.controls.text
 		 */
 		protected function stageText_keyDownHandler(event:KeyboardEvent):void
 		{
-			if(event.keyCode == Keyboard.ENTER)
+			if(!this._multiline && (event.keyCode == Keyboard.ENTER || event.keyCode == Keyboard.NEXT))
 			{
+				event.preventDefault();
 				this.dispatchEventWith(FeathersEventType.ENTER);
 			}
 			else if(event.keyCode == Keyboard.BACK)
@@ -1072,6 +1310,17 @@ package feathers.controls.text
 				//always need to prevent it here
 				event.preventDefault();
 				Starling.current.nativeStage.focus = Starling.current.nativeStage;
+			}
+		}
+
+		/**
+		 * @private
+		 */
+		protected function stageText_keyUpHandler(event:KeyboardEvent):void
+		{
+			if(!this._multiline && (event.keyCode == Keyboard.ENTER || event.keyCode == Keyboard.NEXT))
+			{
+				event.preventDefault();
 			}
 		}
 	}

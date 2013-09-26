@@ -38,6 +38,7 @@ package feathers.core
 	/**
 	 * Handles the editing of text.
 	 *
+	 * @see feathers.controls.TextInput
 	 * @see http://wiki.starling-framework.org/feathers/text-editors
 	 */
 	public interface ITextEditor extends IFeathersControl
@@ -53,6 +54,58 @@ package feathers.core
 		function set text(value:String):void;
 
 		/**
+		 * Determines if the entered text will be masked so that it cannot be
+		 * seen, such as for a password input.
+		 */
+		function get displayAsPassword():Boolean;
+
+		/**
+		 * @private
+		 */
+		function set displayAsPassword(value:Boolean):void;
+
+		/**
+		 * The maximum number of characters that may be entered.
+		 */
+		function get maxChars():int;
+
+		/**
+		 * @private
+		 */
+		function set maxChars(value:int):void;
+
+		/**
+		 * Limits the set of characters that may be entered.
+		 */
+		function get restrict():String;
+
+		/**
+		 * @private
+		 */
+		function set restrict(value:String):void;
+
+		/**
+		 * Determines if the text is editable.
+		 */
+		function get isEditable():Boolean;
+
+		/**
+		 * @private
+		 */
+		function set isEditable(value:Boolean):void;
+
+		/**
+		 * Determines if the owner should call <code>setFocus()</code> on
+		 * <code>TouchPhase.ENDED</code> or on <code>TouchPhase.BEGAN</code>.
+		 * This is a hack because <code>StageText</code> doesn't like being
+		 * assigned focus on <code>TouchPhase.BEGAN</code>. In general, most
+		 * text editors should simply return <code>false</code>.
+		 *
+		 * @see #setFocus()
+		 */
+		function get setTouchFocusOnEndedPhase():Boolean;
+
+		/**
 		 * Gives focus to the text editor. Includes an optional position which
 		 * may be used by the text editor to determine the cursor position. The
 		 * position may be outside of the editors bounds.
@@ -60,9 +113,20 @@ package feathers.core
 		function setFocus(position:Point = null):void;
 
 		/**
+		 * Removes focus from the text editor.
+		 */
+		function clearFocus():void;
+
+		/**
 		 * Sets the range of selected characters. If both values are the same,
 		 * the text insertion position is changed and nothing is selected.
 		 */
 		function selectRange(startIndex:int, endIndex:int):void;
+
+		/**
+		 * Measures the text's bounds (without a full validation, if
+		 * possible).
+		 */
+		function measureText(result:Point = null):Point;
 	}
 }
