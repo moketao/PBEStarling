@@ -1,0 +1,21 @@
+<TextureAtlas imagePath="dude.png">
+    <SubTexture name="dude_idle_01" x="2" y="2" width="128" height="128"/>
+    <SubTexture name="dude_idle_02" x="132" y="2" width="128" height="128"/>
+    <SubTexture name="dude_idle_03" x="262" y="2" width="128" height="128"/>
+    <SubTexture name="dude_run_01" x="392" y="2" width="128" height="128"/>
+    <SubTexture name="dude_run_02" x="522" y="2" width="128" height="128"/>
+    <SubTexture name="dude_run_03" x="652" y="2" width="128" height="128"/>
+    <SubTexture name="dude_run_04" x="782" y="2" width="128" height="128"/>
+    <SubTexture name="dude_run_05" x="2" y="132" width="128" height="128"/>
+    <SubTexture name="dude_run_06" x="132" y="132" width="128" height="128"/>
+    <SubTexture name="dude_run_07" x="262" y="132" width="128" height="128"/>
+    <SubTexture name="dude_run_08" x="392" y="132" width="128" height="128"/>
+    <SubTexture name="dude_run_09" x="522" y="132" width="128" height="128"/>
+    <SubTexture name="dude_run_10" x="652" y="132" width="128" height="128"/>
+    <SubTexture name="dude_run_11" x="782" y="132" width="128" height="128"/>
+    <SubTexture name="dude_run_12" x="2" y="262" width="128" height="128"/>
+    <SubTexture name="dude_run_13" x="132" y="262" width="128" height="128"/>
+    <SubTexture name="dude_run_14" x="262" y="262" width="128" height="128"/>
+    <SubTexture name="dude_run_15" x="392" y="262" width="128" height="128"/>
+    <SubTexture name="dude_run_16" x="522" y="262" width="128" height="128"/>
+</TextureAtlas>

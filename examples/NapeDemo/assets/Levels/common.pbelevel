@@ -1,0 +1,117 @@
+<things version="1">
+  <entity name="Space">
+	 <component type="com.nape.NapeSpaceComponent" name="Space">
+		<gravity>
+			<x>0</x>
+			<y>600</y>
+		</gravity>
+	</component>
+  </entity>
+  
+  <entity name="Scene">
+	  <component type="com.starling.rendering2D.StarlingScene" name="Scene">
+		<!--<trackObject componentReference="Dude"/>
+		<trackOffset>
+			<x>-640</x>
+			<y>-300</y>
+		</trackOffset>-->
+	  </component>
+  </entity>
+  
+  <!-- Software rendered DisplayObjectScene for Box2D debug drawing -->
+  <entity name="DebugScene">
+    <component type="com.pblabs.rendering2D.DisplayObjectScene" name="DebugScene">
+		<trackObject componentReference="Dude"/>
+		<trackOffset>
+			<x>-640</x>
+			<y>-300</y>
+		</trackOffset>
+		<sceneViewName>MainView</sceneViewName>
+    </component>
+  </entity>
+  <entity name="NapeDebugDraw">
+    <component type="com.nape.NapeDebugDraw" name="Debug">
+      <spaceComponent entityName="Space" componentReference="Space"/>
+    </component>
+  </entity>
+  
+  <entity name="Dude">
+	<component type="com.nape.NapeBodyComponent" name="Spatial">
+		<shapes childType="com.nape.CollisionShape">
+			<_0 type="com.nape.CircleShape">
+				<radius>32</radius>
+			</_0>
+		</shapes>
+		<spaceComponent entityName="Space" componentName="Space" />
+		<bodyTypeName>DYNAMIC</bodyTypeName>
+	</component>
+	
+	<!-- for debug draw tracking -->
+	<component type="com.pblabs.rendering2D.SimpleShapeRenderer" name="DebugRender">
+		<scene componentReference="DebugScene"/>
+		<positionProperty>@Spatial.position</positionProperty>
+      <rotationProperty>@Spatial.rotation</rotationProperty>
+      <sizeProperty>@Spatial.size</sizeProperty>
+	</component>
+	
+	
+	<component type="com.starling.rendering2D.SpriteSheetRenderer" name="Render">
+		<textureAtlasComponent componentReference="DudeSWF" />
+		<prefix>boy</prefix>
+		<scene componentReference="Scene"/>
+		<fps>24</fps>
+		  <positionProperty>@Spatial.position</positionProperty>
+		  <positionOffset>
+			<x>40</x>
+			<y>50</y>
+		</positionOffset>
+	</component>
+	
+	<component type="com.pblabs.animation.AnimatorComponent" name="FrameAnimation">
+      <animations childType="com.pblabs.animation.FrameAnimator">
+        <idle type="">
+          <!-- something wrong with ping-ping <animationType>PING_PONG_ANIMATION</animationType>-->
+		  <animationType>NO_ANIMATION</animationType>
+          <repeatCount>-1</repeatCount>
+          <startFrame type="int">11</startFrame>
+        </idle>
+		<run type="">
+          <animationType>LOOP_ANIMATION</animationType>
+          <duration>1.0</duration>
+          <repeatCount>-1</repeatCount>
+          <startFrame type="int">1</startFrame>
+          <endFrame type="int">15</endFrame>
+        </run>
+      </animations>
+      <defaultAnimation>idle</defaultAnimation>
+      <reference>@Render.spriteIndex</reference>
+    </component>
+	
+	
+    <component type="com.pblabs.stupidSampleGame.DudeController" name="Controller">
+      <input childType="com.pblabs.engine.core.InputKey">
+        <GoLeft>LEFT</GoLeft>
+        <GoRight>RIGHT</GoRight>
+        <Jump>UP</Jump>
+        <GoLeft>A</GoLeft>
+        <GoRight>D</GoRight>
+        <Jump>SPACE</Jump>
+		<ZoomIn>PLUS</ZoomIn>
+		<ZoomOut>MINUS</ZoomOut>
+      </input>
+      <velocityReference>@Spatial.velocity</velocityReference>
+	   <bodyComponent componentName="Spatial" />
+	   <animatorReference componentName="FrameAnimation" />
+	   <renderReference componentName="Render" />
+    </component>
+  </entity>
+  <group name="Common">
+    <objectReference name="Space"/>
+    <objectReference name="Scene"/>
+    <objectReference name="Dude"/>
+	
+	<!-- Nape debug drawer and legacy DisplayObjectScene 
+	<objectReference name="DebugScene"/> -->
+    <objectReference name="NapeDebugDraw"/>
+  </group>
+</things>

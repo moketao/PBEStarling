@@ -1,0 +1,29 @@
+<things version="1">
+  
+  <entity name="DudeAtlas">
+	  <component type="com.starling.rendering2D.TextureAtlasComponent" name="TextureAtlas">
+		  <xml filename="../assets/images/dude.xml" />
+		  <image filename="../assets/images/dude.png" />
+	  </component>
+  </entity> 
+  
+  <entity name="PlatformTexture">
+    <component type="com.starling.rendering2D.TextureComponent" name="Texture">
+      <image filename="../Assets/Images/platform.png"/>
+    </component>
+  </entity>
+  
+  <entity name="DudeSWF">
+	  <component type="com.starling.rendering2D.SWFTextureAtlasComponent" name="TextureAtlas">
+		  <swf filename="../assets/sample_for_atlas.swf" />
+		  <movieClipClassName>SheetMC</movieClipClassName>
+		  <scaleFactor>0.5</scaleFactor>
+	  </component>
+  </entity>
+  
+  <group name="SpriteSheets">
+    <objectReference name="DudeSWF"/>
+    <objectReference name="DudeAtlas"/>
+    <objectReference name="PlatformTexture"/>
+  </group>
+</things>
