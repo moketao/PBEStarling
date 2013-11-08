@@ -100,7 +100,7 @@ package com.starling.rendering2D
 				//TODO - fix trackLimitRectangle
 				if ( trackObject && trackObject.displayObject != null)
 				{
-					trackObject.onFrame(time);
+					//trackObject.onFrame(time);
 					sceneView.pivotX = trackObject.position.x;
 					sceneView.pivotY = trackObject.position.y;
 					

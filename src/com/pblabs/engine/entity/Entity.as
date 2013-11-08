@@ -141,9 +141,26 @@ package com.pblabs.engine.entity
                     continue;
                 }
 				
-				//check the includeInType to make sure the component should be included in the deserialization
-				if ( Serializer.instance.includeInType == null || componentXML.@includeIn == undefined || componentXML.@includeIn.indexOf(Serializer.instance.includeInType) >= 0 )
+				//check for false matches
+				var isInlcuded:Boolean = false;
+				if ( Serializer.instance.includeInType != null && componentXML.@includeIn != undefined )
 				{
+					var incIn:String = String(componentXML.@includeIn);
+					var incTypes:Array = incIn.split(',');
+					
+					for (var i:int = 0; i < incTypes.length; i++ )
+					{
+						if ( incTypes[i] == Serializer.instance.includeInType )
+						{
+							isInlcuded = true;
+							break;
+						}
+					}
+				}
+				
+				//check the includeInType to make sure the component should be included in the deserialization
+				if ( Serializer.instance.includeInType == null || componentXML.@includeIn == undefined || isInlcuded )
+				{	
 					var componentName:String = componentXML.attribute("name");
 					var componentClassName:String = componentXML.attribute("type");
 					var component:IEntityComponent = null;
@@ -174,6 +191,7 @@ package com.pblabs.engine.entity
 
 					// Deserialize the XML into the component.
 					Serializer.instance.deserialize(component, componentXML);
+				
 				}
             }
 

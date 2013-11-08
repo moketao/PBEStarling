@@ -104,7 +104,7 @@ package com.recast
 			crowd.removeAgent(idx);
 			_numOfAgents--;
 			
-			trace("num of agents: ", _numOfAgents);
+			//trace("num of agents: ", _numOfAgents);
 			//Profiler.exit("removeAgent");
 		}
 		
