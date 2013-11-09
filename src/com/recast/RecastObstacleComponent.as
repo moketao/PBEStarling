@@ -16,8 +16,42 @@ package com.recast
 		public var radius:Number = 1;
 		public var height:Number = 2;
 		
-		public var position:Point = new Point();
+		private var _position:Point = new Point();
 		
+		public function get position():Point { return _position; }
+		public function set position(value:Point):void 
+		{ 
+			if (! _position.equals(value) )
+			{
+				_position = value; 
+				reAdd();
+			}
+		}
+		
+		public function get x():Number
+		{
+			return _position.x;
+		}
+		public function set x(value:Number ):void
+		{
+			if ( value != _position.x )
+			{
+				_position.x = value;
+				reAdd();
+			}
+		}
+		public function get y():Number
+		{
+			return _position.y;
+		}
+		public function set y(value:Number ):void
+		{
+			if ( value != _position.y )
+			{
+				_position.y = value;
+				reAdd();
+			}
+		}
 		public var z:Number = 0;
 		
 		/**
@@ -38,6 +72,15 @@ package com.recast
 				manager.owner.eventDispatcher.addEventListener(Event.COMPLETE, addObstacle );
 		}
 		
+		protected function reAdd():void
+		{
+			if ( _id > 0 )
+			{
+				manager.removeObstacle(_id);
+				doAddObstacle();
+			}
+		}
+		
 		protected function addObstacle(e:Event = null):void
 		{
 			
@@ -50,7 +93,7 @@ package com.recast
 		//test function
 		private function doAddObstacle():void
 		{
-			_id = manager.addObstacle(worldPosition.x, z, worldPosition.y, radius, height); //for 2d, use the z property form the y-axis
+			_id = manager.addObstacle(position.x, z, position.y, radius, height); //for 2d, use the z property form the y-axis
 			//Logger.print(this, "addObstacle " + _id);
 		}
 		
@@ -62,6 +105,7 @@ package com.recast
 				manager.removeObstacle(id);
 		}
 		
+		/*
 		public function set worldPosition(value:Point):void
 		{
 			position = manager.worldToLocal(value);
@@ -71,7 +115,7 @@ package com.recast
 		{
 			return manager.localToWorld(position);
 		}
-		
+		*/
 		private var _id:uint;
 		
 	}

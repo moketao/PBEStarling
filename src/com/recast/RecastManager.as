@@ -25,7 +25,7 @@ package com.recast
 	 */
 	public class RecastManager extends TickedComponent 
 	{
-		public var scale:Number = 1.0;
+		//public var scale:Number = 1.0;
 		public var geometry:DataResource;
 		
 		public var m_cellSize:Number = 0.3,
@@ -69,9 +69,9 @@ package com.recast
 		{
 			
 			var posPtr:int = CModule.malloc(12);
-			CModule.writeFloat(posPtr, x / scale);
-			CModule.writeFloat(posPtr + 4, y / scale);
-			CModule.writeFloat(posPtr + 8, z / scale);
+			CModule.writeFloat(posPtr, x );
+			CModule.writeFloat(posPtr + 4, y );
+			CModule.writeFloat(posPtr + 8, z );
 			
 			var idx:int = crowd.addAgent(posPtr, paramsSwigCPtr );
 			
@@ -141,9 +141,9 @@ package com.recast
 		public function moveAgent(idx:uint, x:Number, y:Number, z:Number):void
 		{
 			var posPtr:int = CModule.malloc(12);
-			CModule.writeFloat(posPtr, x / scale);
-			CModule.writeFloat(posPtr + 4, y / scale);
-			CModule.writeFloat(posPtr + 8, z / scale);
+			CModule.writeFloat(posPtr, x );
+			CModule.writeFloat(posPtr + 4, y );
+			CModule.writeFloat(posPtr + 8, z );
 			
 			var navquery:dtNavMeshQuery  = new dtNavMeshQuery();
 			navquery.swigCPtr =  sample.getNavMeshQuery();
@@ -209,11 +209,11 @@ package com.recast
 				return 0;
 			
 			var posPtr:int = CModule.malloc(12);
-			CModule.writeFloat(posPtr, x / scale);
-			CModule.writeFloat(posPtr + 4, y / scale);
-			CModule.writeFloat(posPtr + 8, z / scale);
+			CModule.writeFloat(posPtr, x );
+			CModule.writeFloat(posPtr + 4, y );
+			CModule.writeFloat(posPtr + 8, z );
 			_dirtyTiles = true; //make sure tiles get rebuilt
-			var oid:uint = sample.addTempObstacle(posPtr, radius / scale, height / scale);
+			var oid:uint = sample.addTempObstacle(posPtr, radius , height );
 			
 			CModule.free(posPtr);
 			
@@ -377,7 +377,7 @@ package com.recast
 			}
 		}
 		
-		
+		/*
 		public function localToWorld(localPosition:Point):Point
 		{
 			var wp:Point = localPosition.clone()
@@ -393,6 +393,7 @@ package com.recast
 			lp.y /= this.scale;
             return lp;
 		}
+		*/
 		
 		public function get inputGeomerty():InputGeom
 		{

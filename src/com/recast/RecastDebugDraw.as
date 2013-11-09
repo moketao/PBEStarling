@@ -36,7 +36,7 @@ package com.recast
 		
 		protected function onClick(e:MouseEvent):void
 		{
-			var localPoisition:Point = manager.worldToLocal( new Point(PBE.mainClass.mouseX, PBE.mainClass.mouseY ));
+			var localPoisition:Point = new Point(PBE.mainClass.mouseX, PBE.mainClass.mouseY );
 			
 			trace(localPoisition);
 			
@@ -103,10 +103,10 @@ package com.recast
 						//this.graphics.beginFill(Math.random()* 0xffffff, 0.5 );
 						PBE.mainClass.graphics.lineStyle(0.1, 0x123d4b);
 						
-						PBE.mainClass.graphics.moveTo(p1.x * manager.scale, p1.z * manager.scale);
-						PBE.mainClass.graphics.lineTo(p2.x * manager.scale, p2.z * manager.scale);
-						PBE.mainClass.graphics.lineTo(p3.x * manager.scale, p3.z * manager.scale);
-						PBE.mainClass.graphics.lineTo(p1.x * manager.scale, p1.z * manager.scale);
+						PBE.mainClass.graphics.moveTo(p1.x, p1.z);
+						PBE.mainClass.graphics.lineTo(p2.x, p2.z);
+						PBE.mainClass.graphics.lineTo(p3.x, p3.z);
+						PBE.mainClass.graphics.lineTo(p1.x, p1.z);
 						
 					}
 					PBE.mainClass.graphics.endFill();

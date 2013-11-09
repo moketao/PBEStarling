@@ -86,8 +86,8 @@ package com.recast
 			{
 				
 				var params:dtCrowdAgentParams = dtCrowdAgentParams.create();
-				params.radius  = radius / manager.scale;
-				params.height  = height / manager.scale;
+				params.radius  = radius;
+				params.height  = height;
 				params.maxAcceleration = maxAccel;
 				params.maxSpeed = maxSpeed;
 				params.collisionQueryRange = collisionQueryRange;
@@ -104,7 +104,7 @@ package com.recast
 				params.updateFlags = String.fromCharCode(updateFlags); //since updateFlags is stored as a char in recast, need to save the string as the char code value
 				//trace(params.updateFlags.charCodeAt(0) );
 				
-				_idx = manager.addAgent(worldPosition.x, z, worldPosition.y, params.swigCPtr );
+				_idx = manager.addAgent(position.x, z, position.y, params.swigCPtr );
 			
 				agentPositionPointer = manager.getAgentPosition(_idx);
 				agentVelocityPointer = manager.getAgentVelocity(_idx);
@@ -190,14 +190,22 @@ package com.recast
 			
 			if ( _idx > 0 && manager != null ) //only update the position and velocity if the agent id is set, incase the agent is removed and readded
 			{
+				
+				if ( _positionDirty )
+				{
+					removeAgent() ;
+					addAgent();
+				}
+				
 				//if the goal has changed, request a move to the goalPosition
 				if ( _goalDirty )
 				{
 					//Logger.print(this, "Move Agent to " + _goalPosition.x + " " + _goalPosition.y );
 					//manager.moveAgent(_idx, _goalPosition.x, z, _goalPosition.y );
-					manager.moveAgent(_idx, goalWorldPosition.x, z, goalWorldPosition.y );
+					manager.moveAgent(_idx, goalPosition.x, z, goalPosition.y );
 					_goalDirty = false;
 				}
+				
 				
 				_position.x = CModule.readFloat(agentPositionPointer);
 				//_position.y = CModule.readFloat(agentPositionPointer + 4); 
@@ -237,13 +245,17 @@ package com.recast
         
         public function set position(value:Point):void
         {
-            _position.x = value.x;
-            _position.y = value.y;
+			if (! _position.equals(value) )
+			{
+				_position.x = value.x;
+				_position.y = value.y;
+				_positionDirty = true;
+			}
         }
 		
 		/**
 		 * returns the agents worldPosition (agent's position * recast scale)
-		 */
+		 
 		public function get worldPosition():Point
 		{
 			return manager.localToWorld(_position);
@@ -252,7 +264,7 @@ package com.recast
 		{
 			position = manager.worldToLocal(worldPosition);
 		}
-		
+		*/
 		public function get goalDirty():Boolean
 		{
 			return _goalDirty;
@@ -294,20 +306,20 @@ package com.recast
 		
 		/**
 		 * The position to move the agent to with pathfinding
-		 */
+		
         public function get goalWorldPosition():Point
         {
 			return manager.localToWorld(_goalPosition);
         }
-		
+		 */
 		/**
 		 * set the agent's goal position from the world position
-		 */
+		
 		public function set goalWorldPosition(worldPosition:Point):void
 		{
 			goalPosition = manager.worldToLocal(worldPosition);
 		}
-		
+		 */
 		
 		
 		/**
@@ -333,7 +345,11 @@ package com.recast
 		
         public function set x(value:Number):void
         {
-            _position.x = value;
+			if ( value != _position.x )
+			{
+				_position.x = value;
+				_positionDirty = true;
+			}
         }
         
         public function get x():Number
@@ -344,7 +360,11 @@ package com.recast
 		
         public function set y(value:Number):void
         {
-            _position.y = value;
+			if ( value != _position.y )
+			{
+				_position.y = value;
+				_positionDirty = true;
+			}
         }
         
         public function get y():Number
@@ -352,6 +372,7 @@ package com.recast
             return _position.y;
         }
 		
+		private var _positionDirty:Boolean;
 		private var _goalDirty:Boolean;
 		private var _position:Point = new Point();
 		private var _goalPosition:Point = new Point();

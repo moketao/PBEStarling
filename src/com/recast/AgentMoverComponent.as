@@ -16,6 +16,25 @@ package com.recast
 		
 		public var snapThreshold:Number = 0;
 		
+		/*
+		public function get worldPosition():Point
+		{
+			var result:Point;
+			if ( agent )
+				result = new Point(position.x * agent.manager.scale, position.y * agent.manager.scale );
+			return result;
+		}
+		
+		public function set worldPosition(value:Point):void
+		{
+			if ( agent )
+			{
+				position.x = value.x / agent.manager.scale;
+				position.y = value.y / agent.manager.scale;
+			}
+		}
+		*/
+		
 		public function get x():Number
 		{
 			return position.x;
@@ -58,13 +77,13 @@ package com.recast
 			{
 				_positionDirty = false;
 				
-				if ( agent.position.subtract(position).length >= snapThreshold / agent.manager.scale )
+				if ( agent.position.subtract(position).length >= snapThreshold )
 				{
 					//agent's position needs to be adjust, remove agent and readd at the new positon
-					agent.removeAgent();
+					//agent.removeAgent();
 					//todo - smooth to the position
 					agent.position = position.clone();
-					agent.addAgent();
+					//agent.addAgent();
 					agent.goalDirty = true; //make sure the goal is updated again, calling a move
 				}
 			}

@@ -135,7 +135,7 @@ package com.starling.rendering2D
 				// Apply limit to camera movement.
 				if(trackLimitRectangle != null)
 				{
-					var centeredLimitBounds:Rectangle = new Rectangle( trackLimitRectangle.x     + (sceneView.stage.stageWidth * 0.5), trackLimitRectangle.y      + (sceneView.stage.stageHeight * 0.5) ,
+					var centeredLimitBounds:Rectangle = new Rectangle( trackLimitRectangle.x * zoom    + (sceneView.stage.stageWidth * 0.5) , trackLimitRectangle.y  * zoom    + (sceneView.stage.stageHeight * 0.5) ,
 																	  trackLimitRectangle.width * zoom - (sceneView.stage.stageWidth )      , trackLimitRectangle.height * zoom - (sceneView.stage.stageHeight ) );
 				   
 					 sceneView.x = PBUtil.clamp(sceneView.x, -centeredLimitBounds.right, -centeredLimitBounds.left);
