@@ -207,8 +207,26 @@ package com.pblabs.engine.serialization
         public function deserialize(object:*, xml:XML, typeHint:String=null):*
         {
 			//check the includeInType to make sure the entity should be included in the deserialization
-			if ( includeInType != null && xml.@includeIn != undefined && xml.@includeIn.indexOf(includeInType) < 0 )
-				return;
+			if ( includeInType != null && xml.@includeIn != undefined )
+			{
+				if ( xml.@includeIn.indexOf(includeInType) < 0 )
+					return;
+				
+				//check for false matches
+				var incIn:String = String(xml.@includeIn);
+				var incTypes:Array = incIn.split(',');
+				var found:Boolean = false;
+				for (var i:int = 0; i < incTypes.length; i++ )
+				{
+					if ( incTypes[i] == includeInType )
+					{
+						found = true;
+						break;
+					}
+				}
+				if( !found )
+					return;
+			}
 			
             // Dispatch our special cases - entities and ISerializables.
             if (object is ISerializable)
