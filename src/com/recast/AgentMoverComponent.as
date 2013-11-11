@@ -75,16 +75,17 @@ package com.recast
 			
 			if ( _positionDirty )
 			{
-				_positionDirty = false;
 				
 				if ( agent.position.subtract(position).length >= snapThreshold )
 				{
 					//agent's position needs to be adjust, remove agent and readd at the new positon
-					//agent.removeAgent();
+					agent.removeAgent();
 					//todo - smooth to the position
 					agent.position = position.clone();
-					//agent.addAgent();
+					agent.addAgent();
 					agent.goalDirty = true; //make sure the goal is updated again, calling a move
+					
+					_positionDirty = false;
 				}
 			}
 		}

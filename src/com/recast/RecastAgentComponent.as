@@ -191,12 +191,6 @@ package com.recast
 			if ( _idx > 0 && manager != null ) //only update the position and velocity if the agent id is set, incase the agent is removed and readded
 			{
 				
-				if ( _positionDirty )
-				{
-					removeAgent() ;
-					addAgent();
-				}
-				
 				//if the goal has changed, request a move to the goalPosition
 				if ( _goalDirty )
 				{
