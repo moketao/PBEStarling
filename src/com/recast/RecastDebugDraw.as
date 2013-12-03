@@ -4,6 +4,7 @@ package com.recast
 	import com.pblabs.engine.debug.Logger;
 	import com.pblabs.engine.PBE;
 	import com.pblabs.rendering2D.DisplayObjectRenderer;
+	import flash.display.Sprite;
 	import flash.events.KeyboardEvent;
 	import flash.events.MouseEvent;
 	import flash.geom.Point;
@@ -15,13 +16,20 @@ package com.recast
 	 * ...
 	 * @author ...
 	 */
-	public class RecastDebugDraw extends AnimatedComponent 
+	public class RecastDebugDraw extends DisplayObjectRenderer 
 	{
 		public var manager:RecastManager;
 		
 		public var navMeshDirty:Boolean = true;
 		
 		protected var tiles:Array;
+		
+		private var sprite:Sprite = new Sprite();
+		
+		public function RecastDebugDraw()
+		{
+			this.displayObject = sprite;
+		}
 		
 		override protected function onAdd():void 
 		{
@@ -78,7 +86,7 @@ package com.recast
 		private function drawNavMesh(tiles:Array):void
 		{
 			Logger.print(this, "drawNavMesh");
-			PBE.mainClass.graphics.clear();
+			sprite.graphics.clear();
 			
 			//draw each nav mesh tile
 			for ( var t:int = 0; t < tiles.length; t++)
@@ -90,7 +98,7 @@ package com.recast
 					var poly:Object = polys[p];
 					//draw each tri in the poly
 					var triVerts:Array = poly.verts;
-					PBE.mainClass.graphics.beginFill(0x6796a5, 0.5 );
+					sprite.graphics.beginFill(0x6796a5, 0.5 );
 					//this.graphics.beginFill(0xffffff * Math.random(), 0.5 );
 					for ( var i:int = 0; i < poly.triCount; i++)
 					{
@@ -101,25 +109,25 @@ package com.recast
 						var p3:Object = {x: triVerts[(i * 9) + 6], y: triVerts[(i * 9) + 7], z: triVerts[(i * 9) + 8]  };
 					
 						//this.graphics.beginFill(Math.random()* 0xffffff, 0.5 );
-						PBE.mainClass.graphics.lineStyle(0.1, 0x123d4b);
+						sprite.graphics.lineStyle(0.1, 0x123d4b);
 						
-						PBE.mainClass.graphics.moveTo(p1.x, p1.z);
-						PBE.mainClass.graphics.lineTo(p2.x, p2.z);
-						PBE.mainClass.graphics.lineTo(p3.x, p3.z);
-						PBE.mainClass.graphics.lineTo(p1.x, p1.z);
+						sprite.graphics.moveTo(p1.x, p1.z);
+						sprite.graphics.lineTo(p2.x, p2.z);
+						sprite.graphics.lineTo(p3.x, p3.z);
+						sprite.graphics.lineTo(p1.x, p1.z);
 						
 					}
-					PBE.mainClass.graphics.endFill();
+					sprite.graphics.endFill();
 				}
 			}
 			
 			//draw origin
-			PBE.mainClass.graphics.lineStyle(0.1, 0x00ff00);
-			PBE.mainClass.graphics.moveTo(0, 0);
-			PBE.mainClass.graphics.lineTo(0, 10 );
-			PBE.mainClass.graphics.lineStyle(0.1, 0x0000ff);
-			PBE.mainClass.graphics.moveTo(0, 0);
-			PBE.mainClass.graphics.lineTo(10, 0);
+			sprite.graphics.lineStyle(0.1, 0x00ff00);
+			sprite.graphics.moveTo(0, 0);
+			sprite.graphics.lineTo(0, 10 );
+			sprite.graphics.lineStyle(0.1, 0x0000ff);
+			sprite.graphics.moveTo(0, 0);
+			sprite.graphics.lineTo(10, 0);
 		}
 		
 	}

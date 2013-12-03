@@ -266,8 +266,8 @@ package com.pblabs.rendering2D
             // Make sure we are up to date with latest track.
             if(trackObject)
             {
-                position = new Point(-(trackObject.position.x + trackOffset.x), 
-                                     -(trackObject.position.y + trackOffset.y));
+                position = new Point(-((trackObject.position.x * zoom) + trackOffset.x), 
+                                     -((trackObject.position.y *zoom) + trackOffset.y));
             }
             
             if(trackLimitRectangle != null)
@@ -450,8 +450,8 @@ package com.pblabs.rendering2D
             _rootTransform.rotate(_rootRotation);
 
             // Center it appropriately.
-            SceneAlignment.calculate(_tempPoint, sceneAlignment, sceneView.width, sceneView.height);
-            _rootTransform.translate(_tempPoint.x, _tempPoint.y);
+           // SceneAlignment.calculate(_tempPoint, sceneAlignment, sceneView.width, sceneView.height);
+            //_rootTransform.translate(_tempPoint.x, _tempPoint.y);
 
             // Apply the transform.
             _rootSprite.transform.matrix = _rootTransform;
@@ -468,8 +468,13 @@ package com.pblabs.rendering2D
             // Update our state based on the tracked object, if any.
             if(trackObject)
             {
-                position = new Point(-((trackObject.position.x  * zoom) + trackOffset.x), 
-                                     -((trackObject.position.y  * zoom) + trackOffset.y));
+               // position = new Point(-((trackObject.position.x  * zoom) + (trackOffset.x)), 
+                //                     -((trackObject.position.y  * zoom) + (trackOffset.y )));
+                //position = new Point(-((trackObject.position.x  ) + trackOffset.x), 
+                //                     -((trackObject.position.y  ) + trackOffset.y));
+				
+				_rootSprite.x = -((trackObject.displayObject.x * zoom) + trackOffset.x );
+				_rootSprite.y = -((trackObject.displayObject.y * zoom) + trackOffset.y);
             }
 			
             // Apply limit to camera movement.
@@ -481,9 +486,11 @@ package com.pblabs.rendering2D
                 position = new Point(PBUtil.clamp(position.x, -centeredLimitBounds.right, -centeredLimitBounds.left ), 
                                      PBUtil.clamp(position.y, -centeredLimitBounds.bottom, -centeredLimitBounds.top) );
             }
+			
+			_rootSprite.scaleX = _rootSprite.scaleY = zoom;
 
             // Make sure transforms are up to date.
-            updateTransform();
+            //updateTransform();
             
             // This is disabled, because it causes everything in the screen
             // to invalidate and redraw.

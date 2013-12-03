@@ -26,7 +26,8 @@ package com.recast
 	public class RecastManager extends TickedComponent 
 	{
 		//public var scale:Number = 1.0;
-		public var geometry:DataResource;
+		private var _geometry:DataResource;
+		private var _geometryDirty:Boolean = false;
 		
 		public var m_cellSize:Number = 0.3,
 			m_cellHeight:Number = 0.2,
@@ -56,6 +57,17 @@ package com.recast
 		public function RecastManager() 
 		{
 			
+		}
+		
+		public function get geometry():DataResource
+		{
+			return _geometry;
+		}
+		
+		public function set geometry(value:DataResource):void
+		{
+			_geometry = value;
+			_geometryDirty = true;
 		}
 		
 		//WRAPPER METHODS
@@ -250,7 +262,7 @@ package com.recast
 		override protected function onAdd():void 
 		{
 			super.onAdd();
-			
+			/*
 			if ( geometry != null && geometry.isLoaded )
 			{
 				initRecast();
@@ -259,6 +271,7 @@ package com.recast
 			{
 				geometry.addEventListener(ResourceEvent.LOADED_EVENT, initRecast );
 			}
+			*/
 		}
 		
 		protected function initRecast(e:Event=null):void
@@ -308,7 +321,13 @@ package com.recast
 			//Profiler.exit("initRecast");
 			*/
 			
-			CModule.startAsync(this);
+			try{
+				CModule.startAsync(this);
+			}
+			catch (e:Error)
+			{
+				//
+			}
 			
 			//load the mesh file into recast
 			CModule.vfs.addFile(geometry.filename, geometry.data ); //formly CLibInit.supplyFile from Alchemy
@@ -352,8 +371,10 @@ package com.recast
 			//var debug:dtCrowdAgentDebugInfo = dtCrowdAgentDebugInfo.create();
 			//crowdDebugPtr = debug.swigCPtr;
 			
+			_geometryDirty = false;
 			ready = true;
-			owner.eventDispatcher.dispatchEvent(new Event(Event.COMPLETE));
+			if( owner )
+				owner.eventDispatcher.dispatchEvent(new Event(Event.COMPLETE));
 		}
 		
 		
@@ -365,6 +386,11 @@ package com.recast
 			//if(recast != null)
 			//	recast.update(deltaTime);
 			//Profiler.exit("recastOnTick");
+			
+			if ( _geometryDirty && geometry != null && geometry.isLoaded )
+			{
+				initRecast();
+			}
 			
 			try{
 				if( crowd )
