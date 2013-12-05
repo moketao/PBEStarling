@@ -239,7 +239,7 @@ package com.recast
         
         public function set position(value:Point):void
         {
-			if (! _position.equals(value) )
+			if ( value && _position && ! _position.equals(value) )
 			{
 				_position.x = value.x;
 				_position.y = value.y;
