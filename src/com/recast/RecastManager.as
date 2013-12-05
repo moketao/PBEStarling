@@ -211,14 +211,9 @@ package com.recast
 		/**
 		 * Adds an obstacle to the nav mesh.
 		 * This actually adds to obstacle to a queue that adds the obstacles in chunks each tick.
-		 * @param	x Position of the object in the world.
-		 * @param	y
-		 * @param	z
-		 * @param	radius the radius of the obstacle
-		 * @param	height the height of the obstacle
-		 * @return The obstacle id
+		 * @param	obstacleComp - the recastObstacleComponent to add
 		 */
-		public function addObstacle(x:Number, y:Number, z:Number, radius:Number, height:Number, obstacleComp:RecastObstacleComponent):void
+		public function addObstacle(obstacleComp:RecastObstacleComponent):void
 		{
 			//trace( "add Obstacle ", x/scale, y/scale, z/scale, radius/scale, height/scale);
 			//Profiler.enter("addObstacle");
@@ -245,10 +240,10 @@ package com.recast
 			return oid;
 			*/
 			
-			obstacleAddQueue.push( { x:x, y:y, z:z, radius:radius, height:height, obstacleComp:obstacleComp } );
+			obstacleAddQueue.push( obstacleComp );
 		}
 		
-		protected function doAddObstacle(x:Number, y:Number, z:Number, radius:Number, height:Number, obstacleComp:RecastObstacleComponent):void
+		protected function doAddObstacle(obstacleComp:RecastObstacleComponent):void
 		{
 			if ( !sample )
 			{
@@ -257,10 +252,10 @@ package com.recast
 			}
 			
 			var posPtr:int = CModule.malloc(12);
-			CModule.writeFloat(posPtr, x );
-			CModule.writeFloat(posPtr + 4, y );
-			CModule.writeFloat(posPtr + 8, z );
-			var oid:uint = sample.addTempObstacle(posPtr, radius , height );
+			CModule.writeFloat(posPtr, obstacleComp.x );
+			CModule.writeFloat(posPtr + 4, obstacleComp.z );
+			CModule.writeFloat(posPtr + 8, obstacleComp.y );
+			var oid:uint = sample.addTempObstacle(posPtr, obstacleComp.radius , obstacleComp.height );
 			
 			CModule.free(posPtr);
 			
@@ -463,8 +458,8 @@ package com.recast
 					var max:uint = Math.min(obstacleAddQueue.length,32); //only add up to 32 at a time
 					for ( var i:int = 0; i < max; i++ )
 					{
-						var obstacleDef:Object = obstacleAddQueue.shift();
-						doAddObstacle( obstacleDef.x, obstacleDef.y, obstacleDef.z, obstacleDef.radius, obstacleDef.height, obstacleDef.obstacleComp );
+						var obstacleComp:RecastObstacleComponent = obstacleAddQueue.shift();
+						doAddObstacle( obstacleComp );
 					}
 				}
 				

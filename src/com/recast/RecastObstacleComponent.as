@@ -15,6 +15,7 @@ package com.recast
 		public var manager:RecastManager;
 		public var radius:Number = 1;
 		public var height:Number = 2;
+		public var z:Number = 0;
 		
 		private var _position:Point = new Point();
 		
@@ -52,7 +53,6 @@ package com.recast
 				reAdd();
 			}
 		}
-		public var z:Number = 0;
 		
 		/**
 		 * The unique obstacle id returned from the addObstacle method
@@ -100,7 +100,7 @@ package com.recast
 		private function doAddObstacle():void
 		{
 			//_id = manager.addObstacle(position.x, z, position.y, radius, height); //for 2d, use the z property form the y-axis
-			manager.addObstacle(position.x, z, position.y, radius, height, this);
+			manager.addObstacle(this);
 			//Logger.print(this, "addObstacle " + _id);
 		}
 		
