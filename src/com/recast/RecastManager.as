@@ -1,6 +1,7 @@
 package com.recast 
 {
 	import com.pblabs.engine.components.TickedComponent;
+	import com.pblabs.engine.debug.Logger;
 	import com.pblabs.engine.debug.Profiler;
 	import com.pblabs.engine.resource.DataResource;
 	import com.pblabs.engine.resource.ResourceBundle;
@@ -15,6 +16,7 @@ package com.recast
 	import org.recastnavigation.dtCrowdAgentParams;
 	import org.recastnavigation.dtNavMeshQuery;
 	import org.recastnavigation.dtObstacleAvoidanceParams;
+	import org.recastnavigation.dtPathCorridor;
 	import org.recastnavigation.InputGeom;
 	import org.recastnavigation.Sample_TempObstacles;
 	import org.recastnavigation.util.getTiles;
@@ -105,6 +107,12 @@ package com.recast
 		}
 		
 		private var _numOfAgents:int = 0;
+		
+		public function getAgentCount():int
+		{
+			
+			return _numOfAgents;
+		}
 		
 		/** 
 		 * removes an agent to the Detour Crowd.
@@ -201,7 +209,8 @@ package com.recast
 		}
 		
 		/**
-		 * Adds an obstacle to the nav mesh
+		 * Adds an obstacle to the nav mesh.
+		 * This actually adds to obstacle to a queue that adds the obstacles in chunks each tick.
 		 * @param	x Position of the object in the world.
 		 * @param	y
 		 * @param	z
@@ -209,7 +218,7 @@ package com.recast
 		 * @param	height the height of the obstacle
 		 * @return The obstacle id
 		 */
-		public function addObstacle(x:Number, y:Number, z:Number, radius:Number, height:Number):uint
+		public function addObstacle(x:Number, y:Number, z:Number, radius:Number, height:Number, obstacleComp:RecastObstacleComponent):void
 		{
 			//trace( "add Obstacle ", x/scale, y/scale, z/scale, radius/scale, height/scale);
 			//Profiler.enter("addObstacle");
@@ -217,20 +226,52 @@ package com.recast
 			//Profiler.exit("addObstacle");
 			//return result;
 			
+			/*
 			if ( !sample )
+			{
+				Logger.error(this, "addObstacle", "Cannot add an obstacle before the sample has been created");
 				return 0;
+			}
 			
 			var posPtr:int = CModule.malloc(12);
 			CModule.writeFloat(posPtr, x );
 			CModule.writeFloat(posPtr + 4, y );
 			CModule.writeFloat(posPtr + 8, z );
-			_dirtyTiles = true; //make sure tiles get rebuilt
 			var oid:uint = sample.addTempObstacle(posPtr, radius , height );
 			
 			CModule.free(posPtr);
 			
+			_dirtyTiles = true; //make sure tiles get rebuilt
 			return oid;
+			*/
+			
+			obstacleAddQueue.push( { x:x, y:y, z:z, radius:radius, height:height, obstacleComp:obstacleComp } );
 		}
+		
+		protected function doAddObstacle(x:Number, y:Number, z:Number, radius:Number, height:Number, obstacleComp:RecastObstacleComponent):void
+		{
+			if ( !sample )
+			{
+				Logger.error(this, "addObstacle", "Cannot add an obstacle before the sample has been created");
+				return;
+			}
+			
+			var posPtr:int = CModule.malloc(12);
+			CModule.writeFloat(posPtr, x );
+			CModule.writeFloat(posPtr + 4, y );
+			CModule.writeFloat(posPtr + 8, z );
+			var oid:uint = sample.addTempObstacle(posPtr, radius , height );
+			
+			CModule.free(posPtr);
+			
+			_dirtyTiles = true; //make sure tiles get rebuit
+			
+			if ( obstacleComp )
+				obstacleComp._id = oid;
+		}
+		
+		//queue to spread out the adding of obstacles since adding too many at one time appears to cause issues
+		private var obstacleAddQueue:Array = [];
 		
 		/**
 		 * Removes an obstacle from the nav mesh
@@ -377,6 +418,27 @@ package com.recast
 				owner.eventDispatcher.dispatchEvent(new Event(Event.COMPLETE));
 		}
 		
+		public function getAgentPathCount(idx:int):int
+		{
+			var crowdAgent:dtCrowdAgent = new dtCrowdAgent();
+			crowdAgent.swigCPtr = crowd.getAgent(idx);
+			
+			var corridor:dtPathCorridor = new dtPathCorridor();
+			corridor.swigCPtr = crowdAgent.corridor;
+			var pathCount:int = corridor.getPathCount();
+			return pathCount;
+		}
+		public function getAgentPath(idx:int):int
+		{
+			var crowdAgent:dtCrowdAgent = new dtCrowdAgent();
+			crowdAgent.swigCPtr = crowd.getAgent(idx);
+			
+			var corridor:dtPathCorridor = new dtPathCorridor();
+			corridor.swigCPtr = crowdAgent.corridor;
+			var pathPtr:int = corridor.getPath();
+			return pathPtr;
+		}
+		
 		
 		override public function onTick(deltaTime:Number):void 
 		{
@@ -392,14 +454,29 @@ package com.recast
 				initRecast();
 			}
 			
-			try{
-				if( crowd )
-					crowd.update(deltaTime, crowdDebugPtr);
-				if ( _sample && _dirtyTiles)	
-					_sample.handleUpdate(deltaTime);
-			}
-			catch (error:Error) {
-				trace("RecastManager::onTick", error.message);
+			if ( ready )
+			{
+				
+				//process obstacle queue if there are any
+				if ( obstacleAddQueue && obstacleAddQueue.length > 0 )
+				{
+					var max:uint = Math.min(obstacleAddQueue.length,32); //only add up to 32 at a time
+					for ( var i:int = 0; i < max; i++ )
+					{
+						var obstacleDef:Object = obstacleAddQueue.shift();
+						doAddObstacle( obstacleDef.x, obstacleDef.y, obstacleDef.z, obstacleDef.radius, obstacleDef.height, obstacleDef.obstacleComp );
+					}
+				}
+				
+				try{
+					if( crowd )
+						crowd.update(deltaTime, crowdDebugPtr);
+					if ( _sample && _dirtyTiles)	
+						_sample.handleUpdate(deltaTime);
+				}
+				catch (error:Error) {
+					trace("RecastManager::onTick", error.message);
+				}
 			}
 		}
 		

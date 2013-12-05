@@ -82,7 +82,7 @@ package com.recast
 			if ( maxSpeedReference != null && owner != null )
 				maxSpeed = owner.getProperty(maxSpeedReference);
 				
-			if ( manager != null && manager.ready && _idx <= 0 ) //only add the agent if it is not already added
+			if ( manager != null && manager.ready && _idx < 0 ) //only add the agent if it is not already added
 			{
 				
 				var params:dtCrowdAgentParams = dtCrowdAgentParams.create();
@@ -188,7 +188,7 @@ package com.recast
 				_maxSpeedDirty = false;
 			}
 			
-			if ( _idx > 0 && manager != null ) //only update the position and velocity if the agent id is set, incase the agent is removed and readded
+			if ( _idx >= 0 && manager != null ) //only update the position and velocity if the agent id is set, incase the agent is removed and readded
 			{
 				
 				//if the goal has changed, request a move to the goalPosition

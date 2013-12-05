@@ -11,6 +11,13 @@ package com.recast
 	import flash.ui.Keyboard;
 	import flash.utils.setInterval;
 	import flash.utils.setTimeout;
+	import org.recastnavigation._wrap_DT_POLYTYPE_OFFMESH_CONNECTION;
+	import org.recastnavigation._wrap_dtStatusFailed;
+	import org.recastnavigation.CModule;
+	import org.recastnavigation.dtMeshTile;
+	import org.recastnavigation.dtNavMesh;
+	import org.recastnavigation.dtOffMeshConnection;
+	import org.recastnavigation.dtPoly;
 	
 	/**
 	 * ...
@@ -72,6 +79,8 @@ package com.recast
 					//getTiles();
 					navMeshDirty = false;
 				}
+				
+				drawPaths();
 			}
 		}
 		
@@ -83,6 +92,91 @@ package com.recast
 				drawNavMesh(tiles);
 		}
 		
+		
+		//WIP
+		private function drawPaths():void
+		{
+			if ( !manager || !manager.ready )
+				return;
+				
+			for ( var i:int = 0; i < manager.getAgentCount(); i++ )
+			{
+				Logger.print(this, "agentCount" + manager.getAgentCount() );
+				var npath:int = manager.getAgentPathCount(i );
+				if ( npath > 0 )
+				{
+					var pathPtr:int = manager.getAgentPath(i);
+					//trace("Agent path ptr", pathPtr);
+					//Logger.print(this, "agent pathPtr " + pathPtr);
+					
+					var polyRefs:Vector.<int> = CModule.readIntVector(pathPtr, npath );
+					
+					for ( var j:int = 0; j < polyRefs.length; j++)
+					{
+						var polyRef:uint = polyRefs[j]; //CModule.read32(pathPtr + (j * 4) ); //+4 bytes, aka 32bits
+						
+						Logger.print(this, "polyRef " + polyRef);
+						
+						var navMesh:dtNavMesh = new dtNavMesh();
+						navMesh.swigCPtr = manager.sample.getNavMesh();
+						
+						var offMeshConnectionPtr:int = navMesh.getOffMeshConnectionByRef(polyRef );
+						
+						
+						if ( offMeshConnectionPtr > 0 )
+						{
+							var offMeshConnection:dtOffMeshConnection = new dtOffMeshConnection();
+							offMeshConnection.swigCPtr = offMeshConnectionPtr;
+							Logger.print(this, "offMeshConnection " + offMeshConnection.pos );
+						
+							var ptA:Point = new Point();
+							ptA.x = CModule.readFloat( offMeshConnection.pos);
+							//_position.y = CModule.readFloat(agentPositionPointer + 4); 
+							ptA.y = CModule.readFloat( offMeshConnection.pos + 8); //for 2D grab the z value
+							
+							var ptB:Point = new Point();
+							ptB.x = CModule.readFloat( offMeshConnection.pos +12);
+							//_position.y = CModule.readFloat(agentPositionPointer + 16); 
+							ptB.y = CModule.readFloat( offMeshConnection.pos + 20 ); //for 2D grab the z value
+							
+							Logger.print(this, "offMeshConnection " + ptA + " " + ptB);
+							
+						}
+						
+						
+						/*
+						var tile:dtMeshTile = dtMeshTile.create();
+						var poly:dtPoly = dtPoly.create();
+						
+						if ( !navMesh.isValidPolyRef( polyRef ) )
+							Logger.error(this, "drawPaths", "not a valid poly ref" );
+						
+						var tile2:dtMeshTile = new dtMeshTile();
+						tile2.swigCPtr = navMesh.getTileByRef(polyRef);
+						
+						var getTileAndPolyResult:int = navMesh.getTileAndPolyByRef(polyRef, tile.swigCPtr, poly.swigCPtr )
+						if ( _wrap_dtStatusFailed( getTileAndPolyResult ) )
+							Logger.error(this, "drawPaths", "Failed to getTileAndPolyByRef" );
+						
+						
+						var tst:String = poly.vertCount;
+						
+						//got the poly, draw that bitch
+						var polyTypeStr:String = poly.getType();
+						var polyType:Number = polyTypeStr.charCodeAt(0);
+						var polyType2:Number = Number(polyTypeStr);
+						
+						Logger.print(this, "polyType: " +  polyType);
+						if ( polyType == _wrap_DT_POLYTYPE_OFFMESH_CONNECTION() )
+						{
+							Logger.print(this, "is DT_POLYTYPE_OFFMESH_CONNECTION");
+						}
+						*/
+						
+					}
+				}
+			}
+		}
 		private function drawNavMesh(tiles:Array):void
 		{
 			Logger.print(this, "drawNavMesh");

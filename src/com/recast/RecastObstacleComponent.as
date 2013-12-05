@@ -67,9 +67,15 @@ package com.recast
 			super.onAdd();
 			
 			if ( manager != null && manager.ready)
+			{
+				//Logger.print(this, "manager ready, adding obstacle");
 				addObstacle();
+			}
 			else
+			{
+				//Logger.print(this, "manager NOT ready, waiting for complete event");
 				manager.owner.eventDispatcher.addEventListener(Event.COMPLETE, addObstacle );
+			}
 		}
 		
 		protected function reAdd():void
@@ -83,7 +89,7 @@ package com.recast
 		
 		protected function addObstacle(e:Event = null):void
 		{
-			
+			//Logger.print(this, "adding Obstacle");
 			manager.owner.eventDispatcher.removeEventListener(Event.COMPLETE, addObstacle );
 			//TODO - make a better solution. these should be added before the initial mesh creation, or spread out i
 			//setTimeout(doAddObstacle, int( Math.random() * 10000) ); //rather than trying to add them all at once, try to spread them out
@@ -93,7 +99,8 @@ package com.recast
 		//test function
 		private function doAddObstacle():void
 		{
-			_id = manager.addObstacle(position.x, z, position.y, radius, height); //for 2d, use the z property form the y-axis
+			//_id = manager.addObstacle(position.x, z, position.y, radius, height); //for 2d, use the z property form the y-axis
+			manager.addObstacle(position.x, z, position.y, radius, height, this);
 			//Logger.print(this, "addObstacle " + _id);
 		}
 		
@@ -116,7 +123,7 @@ package com.recast
 			return manager.localToWorld(position);
 		}
 		*/
-		private var _id:uint;
+		internal var _id:uint;
 		
 	}
 
