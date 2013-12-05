@@ -1,5 +1,6 @@
 package com.starling.graphics 
 {
+	import com.pblabs.engine.debug.Logger;
 	import com.starling.rendering2D.DisplayObjectRenderer;
 	import com.starling.rendering2D.TextureComponent;
 	import flash.geom.Rectangle;
@@ -22,11 +23,9 @@ package com.starling.graphics
 		public function get lineTo():Array { return _lineTo; }
 		public function set lineTo(value:Array):void
 		{
-			if ( value != _lineTo )
-			{
-				_lineTo = value;
-				_shapeDirty = true;
-			}
+			_lineTo = value;
+			_shapeDirty = true;
+			
 		}
 		public function get radius():Number { return _radius; }
 		public function set radius(value:Number):void
@@ -161,6 +160,9 @@ package com.starling.graphics
 					for ( var i:int = 1; i < lineTo.length; i++ )
 						shape.graphics.lineTo( lineTo[i].x, lineTo[i].y );
 					shape.graphics.lineTo( lineTo[0].x, lineTo[0].y );
+					
+					
+				Logger.print(this, 'shape redrawn' + lineTo.length);
 				}
 				else
 				{
