@@ -80,7 +80,7 @@ package com.recast
 					navMeshDirty = false;
 				}
 				
-				drawPaths();
+				//drawPaths();
 			}
 		}
 		
