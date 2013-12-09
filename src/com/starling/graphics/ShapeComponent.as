@@ -1,19 +1,31 @@
 package com.starling.graphics 
 {
+	import com.paperescape.utils.MathUtil;
 	import com.pblabs.engine.debug.Logger;
 	import com.starling.rendering2D.DisplayObjectRenderer;
 	import com.starling.rendering2D.TextureComponent;
+	import flash.geom.Point;
 	import flash.geom.Rectangle;
 	import starling.display.Shape;
 	import starling.textures.Texture;
 	
 	/**
-	 * ...
-	 * @author Zo
+	 * Shape component for rendering starling graphics
 	 */
 	public class ShapeComponent extends DisplayObjectRenderer 
 	{
 		protected var shape:Shape = new Shape();
+		
+		/**
+		 * If it is a guide, it will only show in the editor.
+		 */
+		public var isGuide:Boolean = false;
+		
+		/**
+		 * used in editor for generating navigation mesh.  solid shapes are used to define the environment mesh used to build the navigation mesh.
+		 */
+		public var isSolid:Boolean = false;
+		public var navMeshHeight:Number = 0;//used for nav mesh, the height to extrude the shape.
 		
 		public function ShapeComponent() 
 		{
@@ -107,6 +119,39 @@ package com.starling.graphics
 				_lineThickness = value;
 				_shapeDirty = true;
 			}
+		}
+		
+		/**
+		 * get the lineTo vertices in world cooridantes, after scale, translation, and rotation
+		 * @return
+		 */
+		public function getWorldVertices():Vector.<Point>
+		{
+			var polygonVertices:Vector.<Point> = new Vector.<Point>();
+			if ( lineTo && lineTo.length > 0 )
+			{
+				for ( var j:int = 0; j < lineTo.length; j++ )
+				{
+					var localPoint:Point = lineTo[j];
+					if ( rotation > 0 )
+					{
+						localPoint = MathUtil.rotate(localPoint, rotation );
+					}
+					var worldPoint:Point = new Point(position.x + (localPoint.x * scale.x), position.y + (localPoint.y * scale.y));
+					
+					polygonVertices.push( worldPoint );
+				}
+			}
+			else if (rect != null )
+			{
+				//get rect vertices
+			}
+			else if ( !isNaN(radius) )
+			{
+				//create a hexagon for a circle
+				
+			}
+			return polygonVertices;
 		}
 		
 		override public function onFrame(deltaTime:Number):void 

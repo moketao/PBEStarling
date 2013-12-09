@@ -5,6 +5,7 @@ package com.recast
 	import com.pblabs.engine.entity.PropertyReference;
 	import flash.events.Event;
 	import flash.geom.Point;
+	import flash.geom.Vector3D;
 	import org.recastnavigation._wrap_DT_CROWD_ANTICIPATE_TURNS;
 	import org.recastnavigation._wrap_DT_CROWD_OBSTACLE_AVOIDANCE;
 	import org.recastnavigation._wrap_DT_CROWD_OPTIMIZE_TOPO;
@@ -55,7 +56,7 @@ package com.recast
 		/**
 		 * The z position of the agent
 		 */
-		public var z:Number = 0; 
+		private var _z:Number = 0; 
 		
 		override protected function onAdd():void 
 		{
@@ -196,16 +197,18 @@ package com.recast
 				{
 					//Logger.print(this, "Move Agent to " + _goalPosition.x + " " + _goalPosition.y );
 					//manager.moveAgent(_idx, _goalPosition.x, z, _goalPosition.y );
-					manager.moveAgent(_idx, goalPosition.x, z, goalPosition.y );
+					manager.moveAgent(_idx, goalPosition.x, z, goalPosition.y ); //swap z and y for 2d
 					_goalDirty = false;
 				}
 				
 				
 				_position.x = CModule.readFloat(agentPositionPointer);
-				//_position.y = CModule.readFloat(agentPositionPointer + 4); 
+				//_position.y = CModule.readFloat(agentPositionPointer + 4);  //swap y and z for 2d
+				_z = CModule.readFloat(agentPositionPointer + 4);  //swap y and z for 2d
 				_position.y = CModule.readFloat(agentPositionPointer + 8); //for 2D grab the z value
 				
 				_velocity.x = CModule.readFloat(agentVelocityPointer);
+				//_velocity.z = CModule.readFloat(agentVelocityPointer + 4); 
 				_velocity.y = CModule.readFloat(agentVelocityPointer + 8);
 			}
 			
@@ -234,15 +237,18 @@ package com.recast
 		 
         public function get position():Point
         {
-            return _position.clone();
+			return new Point(_position.x, _position.y);
+          //  return _position.clone();
         }
         
         public function set position(value:Point):void
         {
-			if ( value && _position && ! _position.equals(value) )
+			//if ( value && _position && ! _position.equals(value) )
+			if ( value && _position && (_position.x != value.x || _position.y != value.y) )
 			{
 				_position.x = value.x;
 				_position.y = value.y;
+				//_position.z = value.z;
 				_positionDirty = true;
 			}
         }
@@ -365,10 +371,23 @@ package com.recast
         {
             return _position.y;
         }
+        public function set z(value:Number):void
+        {
+			if ( value != _z )
+			{
+				_z= value;
+				_positionDirty = true;
+			}
+        }
+        
+        public function get z():Number
+        {
+            return _z;
+        }
 		
 		private var _positionDirty:Boolean;
 		private var _goalDirty:Boolean;
-		private var _position:Point = new Point();
+		private var _position:Vector3D = new Vector3D();
 		private var _goalPosition:Point = new Point();
 		private var _velocity:Point = new Point();
 		private var _idx:int = -1;

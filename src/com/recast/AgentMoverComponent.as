@@ -65,6 +65,23 @@ package com.recast
 			}
 			
 		}
+		public function get z():Number
+		{
+			return _z;
+		}
+		
+		public function set z(value:Number ):void
+		{
+			
+			if ( _z != value )
+			{
+				_z = value;
+				_positionDirty = true;
+			}
+			
+		}
+		
+		private var _z:Number = 0;
 		
 		override public function onTick(deltaTime:Number):void 
 		{

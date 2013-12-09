@@ -15,7 +15,7 @@ package com.recast
 		public var manager:RecastManager;
 		public var radius:Number = 1;
 		public var height:Number = 2;
-		public var z:Number = 0;
+		private var _z:Number = 0;
 		
 		private var _position:Point = new Point();
 		
@@ -50,6 +50,18 @@ package com.recast
 			if ( value != _position.y )
 			{
 				_position.y = value;
+				reAdd();
+			}
+		}
+		public function get z():Number
+		{
+			return _z;
+		}
+		public function set z(value:Number ):void
+		{
+			if ( value != _z )
+			{
+				_z = value;
 				reAdd();
 			}
 		}
