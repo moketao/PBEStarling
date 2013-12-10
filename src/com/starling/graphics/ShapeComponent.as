@@ -24,8 +24,9 @@ package com.starling.graphics
 		/**
 		 * used in editor for generating navigation mesh.  solid shapes are used to define the environment mesh used to build the navigation mesh.
 		 */
-		public var isSolid:Boolean = false;
+		public var isNavMesh:Boolean = false;
 		public var navMeshHeight:Number = 0;//used for nav mesh, the height to extrude the shape.
+		public var navMeshY:Number = 0; //the 3d y location that the nav mesh surface is on
 		
 		public function ShapeComponent() 
 		{
