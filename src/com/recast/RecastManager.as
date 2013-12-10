@@ -173,7 +173,8 @@ package com.recast
 			
 			var status:int = navquery.findNearestPoly(posPtr, crowd.getQueryExtents(), crowd.getFilter(), targetRef, targetPos);
 		
-			if ( targetRef > 0)
+			var refResult:int = CModule.read32(targetRef);
+			if ( refResult > 0)
 				crowd.requestMoveTarget(idx, targetRef, targetPos);
 				
 			CModule.free(posPtr);
